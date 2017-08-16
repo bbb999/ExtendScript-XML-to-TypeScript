@@ -56,11 +56,11 @@ function parseDefinition(definition) {
     let methods = [];
     for (let element of definition.querySelectorAll(":root > elements")) {
         let type = element.getAttribute("type") || "";
-        for (let property of definition.querySelectorAll(":root > property")) {
+        for (let property of element.querySelectorAll(":root > property")) {
             let p = parseProperty(property, type);
             props.push(p);
         }
-        for (let method of definition.querySelectorAll(":root > method")) {
+        for (let method of element.querySelectorAll(":root > method")) {
             let m = parseMethod(method, type);
             methods.push(m);
         }
