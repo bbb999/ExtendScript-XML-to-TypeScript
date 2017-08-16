@@ -220,7 +220,7 @@ function parseType(datatype) {
 function generate(definitions) {
     let output = "";
     for (let definition of definitions) {
-        output += "/**\n* " + definition.desc.join("\n * ") + "\n*/\n";
+        output += "/**\n * " + definition.desc.join("\n * ") + "\n */\n";
         output += "declare " + definition.type + " " + definition.name + " {\n";
         for (let prop of definition.props) {
             output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n\t */\n";
