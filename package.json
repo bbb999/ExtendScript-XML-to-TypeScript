@@ -1,0 +1,15 @@
+{
+  "name": "convert-extendscript-to-typescript",
+  "version": "0.0.1",
+  "bin": "src/convert.js",
+  "scripts": {
+    "start": "node src"
+  },
+  "dependencies": {
+    "@types/commander": "^2.9.1",
+    "@types/node": "^8.0.22",
+    "@types/xml2js": "^0.4.0",
+    "commander": "^2.11.0",
+    "xml2js": "^0.4.18"
+  }
+}
