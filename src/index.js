@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = require("fs");
 const util_1 = require("util");
-const xml2js_1 = require("xml2js");
+const jsdom_1 = require("jsdom");
 const path_1 = require("path");
 let readFile = util_1.promisify(fs_1.readFile);
 let writeFile = util_1.promisify(fs_1.writeFile);
@@ -20,7 +20,7 @@ function convert(xmlFile) {
             console.info("Converting \"" + path_1.basename(xmlFile) + "\"");
             xmlFile = fs_1.realpathSync(xmlFile);
             let file = yield readFile(xmlFile, "utf-8");
-            let xml = yield parseXml(file);
+            let xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
             let transformed = transform(xml);
             let result = generate(transformed);
             yield writeFile(xmlFile + ".d.ts", result);
@@ -33,26 +33,20 @@ function convert(xmlFile) {
     });
 }
 exports.convert = convert;
-function parseXml(data) {
-    return new Promise((resolve, reject) => {
-        xml2js_1.parseString(data, { explicitCharkey: true }, (e, result) => {
-            e ? reject(e) : resolve(result);
-        });
-    });
-}
 function transform(xml) {
     let result = [];
-    for (let definition of xml.dictionary.package[0].classdef) {
+    let definitions = xml.window.document.documentElement.querySelectorAll(":root > package > classdef");
+    for (let definition of definitions) {
         result.push(parseDefinition(definition));
     }
     return result;
 }
 function parseDefinition(definition) {
     let type;
-    if (definition.$.enumeration) {
+    if (definition.getAttribute("enumeration")) {
         type = "enum";
     }
-    else if (definition.$.dynamic) {
+    else if (definition.getAttribute("dynamic")) {
         type = "class";
     }
     else {
@@ -60,48 +54,43 @@ function parseDefinition(definition) {
     }
     let props = [];
     let methods = [];
-    if (definition.elements) {
-        for (let element of definition.elements) {
-            let isStatic = element.$.type == "class";
-            if (element.property instanceof Array) {
-                for (let property of element.property) {
-                    let p = parseProperty(property, isStatic);
-                    props.push(p);
-                }
-            }
-            if (element.method instanceof Array) {
-                for (let method of element.method) {
-                    let m = parseMethod(method, isStatic);
-                    methods.push(m);
-                }
-            }
+    for (let element of definition.querySelectorAll(":root > elements")) {
+        let type = element.getAttribute("type") || "";
+        for (let property of definition.querySelectorAll(":root > property")) {
+            let p = parseProperty(property, type);
+            props.push(p);
+        }
+        for (let method of definition.querySelectorAll(":root > method")) {
+            let m = parseMethod(method, type);
+            methods.push(m);
         }
     }
+    let extend = definition.querySelector(":root > superclass");
     return {
         type,
-        name: String(definition.$.name),
+        name: definition.getAttribute("name") || "",
         desc: parseDesc(definition),
-        extend: definition.superclass ? definition.superclass[0]._ : undefined,
+        extend: extend ? extend.innerHTML || undefined : undefined,
         props,
         methods,
     };
 }
-function parseProperty(prop, isStatic) {
+function parseProperty(prop, type) {
     return {
-        isStatic: isStatic,
-        readonly: prop.$.rwaccess == "readonly",
-        name: String(prop.$.name),
+        isStatic: type == "class",
+        readonly: prop.getAttribute("rwaccess") == "readonly",
+        name: prop.getAttribute("name") || "",
         desc: parseDesc(prop),
-        types: parseType(prop.datatype),
+        types: parseType(prop.querySelector(":root > datatype")),
     };
 }
-function parseMethod(method, isStatic) {
+function parseMethod(method, type) {
     return {
-        isStatic: isStatic,
-        name: String(method.$.name),
+        isStatic: type == "class",
+        name: method.getAttribute("name") || "",
         desc: parseDesc(method),
-        params: method.parameters ? parseParameters(method.parameters[0].parameter) : [],
-        types: parseType(method.datatype),
+        params: parseParameters(method.querySelectorAll(":root > parameters > parameter")),
+        types: parseType(method.querySelector(":root > datatype")),
     };
 }
 function parseParameters(parameters) {
@@ -109,10 +98,10 @@ function parseParameters(parameters) {
     let previousWasOptional = false;
     for (let parameter of parameters) {
         let param = {
-            name: String(parameter.$.name),
+            name: parameter.getAttribute("name") || "",
             desc: parseDesc(parameter),
-            optional: previousWasOptional || parameter.$.optional == "true",
-            types: parseType(parameter.datatype),
+            optional: previousWasOptional || !!parameter.getAttribute("optional"),
+            types: parseType(parameter.querySelector(":root > datatype")),
         };
         if (param.name.includes("...")) {
             param.name = "...rest";
@@ -181,23 +170,29 @@ function parseCanAccept(str) {
     }
     return types;
 }
-function parseDesc(node) {
+function parseDesc(element) {
     let desc = [];
-    if (node.shortdesc && node.shortdesc[0]._) {
-        desc.push(String(node.shortdesc[0]._).trim());
+    let shortdesc = element.querySelector(":root > shortdesc");
+    if (shortdesc && shortdesc.textContent) {
+        desc.push(shortdesc.textContent);
     }
-    if (node.description && node.description[0]._) {
-        desc.push(String(node.description[0]._).trim());
+    let description = element.querySelector(":root > description");
+    if (description && description.textContent) {
+        desc.push(description.textContent);
     }
+    desc = desc.join("\n").split("\n");
+    desc = desc.map(d => d.replace(/  /g, "").trim()).filter(d => d != "");
     return desc;
 }
 function parseType(datatype) {
     let types = [];
-    if (datatype instanceof Array) {
+    if (datatype) {
+        let typeElement = datatype.querySelector(":root > type");
+        let valueElement = datatype.querySelector(":root > value");
         let type = {
-            name: datatype[0].type[0]._,
-            isArray: !!datatype[0].array,
-            value: datatype[0].value ? String(datatype[0].value[0]._) : undefined,
+            name: typeElement ? typeElement.textContent || "" : "",
+            isArray: !!datatype.querySelector(":root > array"),
+            value: valueElement ? valueElement.textContent || "" : undefined,
         };
         if (type.name == "varies=any" || type.name == "Any") {
             type.name = "any";
@@ -257,7 +252,7 @@ function generate(definitions) {
                 output += "\t" + staticKeyword + "[" + params.join(", ") + "]: " + type + ";\n";
             }
             else if (method.name == definition.name) {
-                output += "\t" + staticKeyword + "constructor(" + params.join(", ") + ");\n";
+                output += "\tconstructor(" + params.join(", ") + ");\n";
             }
             else {
                 output += "\t" + staticKeyword + method.name + "(" + params.join(", ") + "): " + type + ";\n";
@@ -287,6 +282,9 @@ function fixParamName(name) {
     }
     else if (name == "default") {
         name = "default_";
+    }
+    else if (name == "return") {
+        name = "return_";
     }
     return name;
 }
