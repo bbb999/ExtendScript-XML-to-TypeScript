@@ -15,7 +15,7 @@ export async function convert(xmlFile: string) {
     
     let xml = new JSDOM(file, { contentType: "text/xml" });
     
-    let transformed = transform(xml);
+    let transformed = parse(xml);
     
     let result = generate(transformed);
     
@@ -67,7 +67,7 @@ interface ParameterDefinition {
   types: TypeDefinition[];
 }
 
-function transform(xml: JSDOM) {
+function parse(xml: JSDOM) {
   let result: Definition[] = [];
   
   let definitions = xml.window.document.documentElement.querySelectorAll(":root > package > classdef");
