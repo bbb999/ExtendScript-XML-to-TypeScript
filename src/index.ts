@@ -19,7 +19,7 @@ export async function convert(xmlFile: string) {
     
     let result = generate(transformed);
     
-    await writeFile(xmlFile + ".d.ts", result);
+    await writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
     
     console.log("OK");
   }

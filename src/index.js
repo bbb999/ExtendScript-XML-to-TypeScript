@@ -23,7 +23,7 @@ function convert(xmlFile) {
             let xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
             let transformed = parse(xml);
             let result = generate(transformed);
-            yield writeFile(xmlFile + ".d.ts", result);
+            yield writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
             console.log("OK");
         }
         catch (e) {
