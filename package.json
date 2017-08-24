@@ -1,5 +1,5 @@
 {
-  "name": "convert-extendscript-to-typescript",
+  "name": "extendscript-xml-to-typescript",
   "version": "0.0.1",
   "bin": "src/convert.js",
   "scripts": {
