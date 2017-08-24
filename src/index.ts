@@ -60,10 +60,46 @@ interface ParameterDefinition {
   types: TypeDefinition[];
 }
 
+function directFindAll(element: Element, selector: string[]) {
+  let result: Element[] = [];
+  let currentSelector = selector.shift();
+  
+  if(currentSelector) {
+    for(let child of Array.from(element.children)) {
+      if(child.nodeName == currentSelector) {
+        result = result.concat(directFindAll(child, selector.slice()));
+      }
+    }
+  }
+  else {
+    result.push(element);
+  }
+  
+  return result;
+}
+
+function directFind(element: Element, selector: string[]): Element | undefined {
+  let currentSelector = selector.shift();
+  
+  if(currentSelector) {
+    for(let child of Array.from(element.children)) {
+      if(child.nodeName == currentSelector) {
+        let found = directFind(child, selector.slice());
+        if(found) {
+          return found;
+        }
+      }
+    }
+  }
+  else {
+    return element
+  }
+}
+
 function parse(xml: JSDOM) {
   let result: Definition[] = [];
   
-  let definitions = xml.window.document.documentElement.querySelectorAll(":root > package > classdef");
+  let definitions = directFindAll(xml.window.document.documentElement, ["package", "classdef"]);
   
   for(let definition of definitions) {
     result.push(parseDefinition(definition));
@@ -89,7 +125,7 @@ function parseDefinition(definition: Element): Definition {
   
   let props: PropertyDefinition[] = [];
   
-  for (let element of definition.querySelectorAll(":root > elements")) {
+  for (let element of directFindAll(definition,["elements"])) {
     let isStatic = element.getAttribute("type") == "class";
     
     for (let property of Array.from(element.children)) {
@@ -98,7 +134,7 @@ function parseDefinition(definition: Element): Definition {
     }
   }
   
-  let extend = definition.querySelector(":root > superclass");
+  let extend = directFind(definition, ["superclass"]);
   return {
     type,
     name: definition.getAttribute("name") || "",
@@ -120,12 +156,12 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
     readonly: prop.getAttribute("rwaccess") == "readonly",
     name: prop.getAttribute("name") || "",
     desc: parseDesc(prop),
-    params: parseParameters(prop.querySelectorAll(":root > parameters > parameter")),
-    types: parseType(prop.querySelector(":root > datatype")),
+    params: parseParameters(directFindAll(prop, ["parameters", "parameter"])),
+    types: parseType(directFind(prop, ["datatype"])),
   }
 }
 
-function parseParameters(parameters: NodeListOf<Element>): ParameterDefinition[] {
+function parseParameters(parameters: Element[]): ParameterDefinition[] {
   let params: ParameterDefinition[] = [];
   let previousWasOptional = false;
   
@@ -134,7 +170,7 @@ function parseParameters(parameters: NodeListOf<Element>): ParameterDefinition[]
       name: parameter.getAttribute("name") || "",
       desc: parseDesc(parameter),
       optional: previousWasOptional || !!parameter.getAttribute("optional"),
-      types: parseType(parameter.querySelector(":root > datatype")),
+      types: parseType(directFind(parameter, ["datatype"])),
     };
     if(param.name.includes("...")) {
       param.name = "...rest";
@@ -213,12 +249,12 @@ function parseCanAccept(str: string): TypeDefinition[] | undefined {
 function parseDesc(element: Element) {
   let desc: string[] = [];
   
-  let shortdesc = element.querySelector(":root > shortdesc");
+  let shortdesc = directFind(element, ["shortdesc"]);
   if(shortdesc && shortdesc.textContent) {
     desc.push(shortdesc.textContent);
   }
   
-  let description = element.querySelector(":root > description");
+  let description = directFind(element, ["description"]);
   if(description && description.textContent) {
     desc.push(description.textContent);
   }
@@ -229,16 +265,16 @@ function parseDesc(element: Element) {
   return desc;
 }
 
-function parseType(datatype: Element | null): TypeDefinition[] {
+function parseType(datatype: Element | undefined): TypeDefinition[] {
   let types: TypeDefinition[] = [];
   
   if(datatype) {
-    let typeElement = datatype.querySelector(":root > type");
-    let valueElement = datatype.querySelector(":root > value");
+    let typeElement = directFind(datatype, ["type"]);
+    let valueElement = directFind(datatype, ["value"]);
     
     let type: TypeDefinition = {
       name: typeElement ? typeElement.textContent || "" : "",
-      isArray: !!datatype.querySelector(":root > array"),
+      isArray: !!directFind(datatype, ["array"]),
       value: valueElement ? valueElement.textContent || "" : undefined,
     };
     
@@ -296,7 +332,7 @@ function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Defin
 
 function generate(definitions: Definition[]) {
   let output = "";
-
+  
   for(let definition of definitions) {
     output += "/**\n * " + definition.desc.join("\n * ") + "\n */\n";
     let name = "declare " + definition.type + " " + definition.name;
