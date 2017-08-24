@@ -310,4 +310,3 @@ function generateFixParamName(name) {
     }
     return name;
 }
-//# sourceMappingURL=index.js.map

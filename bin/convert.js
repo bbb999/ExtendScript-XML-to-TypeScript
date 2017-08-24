@@ -27,4 +27,3 @@ program
 if (!ok) {
     program.help();
 }
-//# sourceMappingURL=convert.js.map
