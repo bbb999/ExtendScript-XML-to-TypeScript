@@ -35,19 +35,12 @@ interface Definition {
   desc: string[];
   extend: string | undefined;
   props: PropertyDefinition[];
-  methods: MethodDefinition[];
 }
 
 interface PropertyDefinition {
+  type: "method" | "property";
   isStatic: boolean;
   readonly: boolean;
-  name: string;
-  desc: string[];
-  types: TypeDefinition[];
-}
-
-interface MethodDefinition {
-  isStatic: boolean;
   name: string;
   desc: string[];
   params: ParameterDefinition[];
@@ -93,21 +86,15 @@ function parseDefinition(definition: Element): Definition {
   else {
     throw new Error("Unknown definition")
   }
-
+  
   let props: PropertyDefinition[] = [];
-  let methods: MethodDefinition[] = [];
   
   for (let element of definition.querySelectorAll(":root > elements")) {
-    let type = element.getAttribute("type") || "";
+    let isStatic = element.getAttribute("type") == "class";
     
-    for (let property of element.querySelectorAll(":root > property")) {
-      let p = parseProperty(property, type);
+    for (let property of Array.from(element.children)) {
+      let p = parseProperty(property, isStatic);
       props.push(p);
-    }
-    
-    for (let method of element.querySelectorAll(":root > method")) {
-      let m = parseMethod(method, type);
-      methods.push(m);
     }
   }
   
@@ -118,27 +105,23 @@ function parseDefinition(definition: Element): Definition {
     desc: parseDesc(definition),
     extend: extend ? extend.innerHTML || undefined : undefined,
     props,
-    methods,
   }
 }
 
-function parseProperty(prop: Element, type: string): PropertyDefinition {
+function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
+  let type: PropertyDefinition["type"];
+  if(prop.nodeName == "property") { type = "property"; }
+  else if(prop.nodeName == "method") { type = "method"; }
+  else { throw new Error("Unknown property " + prop.nodeName); }
+  
   return {
-    isStatic: type == "class",
+    type,
+    isStatic,
     readonly: prop.getAttribute("rwaccess") == "readonly",
     name: prop.getAttribute("name") || "",
     desc: parseDesc(prop),
+    params: parseParameters(prop.querySelectorAll(":root > parameters > parameter")),
     types: parseType(prop.querySelector(":root > datatype")),
-  }
-}
-
-function parseMethod(method: Element, type: string): MethodDefinition {
-  return {
-    isStatic: type == "class",
-    name: method.getAttribute("name") || "",
-    desc: parseDesc(method),
-    params: parseParameters(method.querySelectorAll(":root > parameters > parameter")),
-    types: parseType(method.querySelector(":root > datatype")),
   }
 }
 
@@ -287,19 +270,15 @@ function parseType(datatype: Element | null): TypeDefinition[] {
 
 function removeInheritedProperties(definitions: Definition[]) {
   for(let definition of definitions) {
-    let list = getListOfPropsToBeRemovedFor(definition, definitions);
-    for(let prop of list.props) {
+    let props = getListOfPropsToBeRemovedFor(definition, definitions);
+    for(let prop of props) {
       definition.props = definition.props.filter(p => p.name != prop);
-    }
-    for(let method of list.methods) {
-      definition.methods = definition.methods.filter(m => m.name != method);
     }
   }
 }
 
 function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Definition[]) {
   let props: string[] = [];
-  let methods: string[] = [];
   
   if(definition.extend) {
     let parent = definitions.find(d => d.name == definition.extend);
@@ -307,16 +286,12 @@ function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Defin
       for(let prop of parent.props) {
         props.push(prop.name);
       }
-      for(let method of parent.methods) {
-        methods.push(method.name);
-      }
-      let list = getListOfPropsToBeRemovedFor(parent, definitions);
-      props = props.concat(list.props);
-      methods = methods.concat(list.methods);
+      let p = getListOfPropsToBeRemovedFor(parent, definitions);
+      props = props.concat(p);
     }
   }
 
-  return { props, methods }
+  return props
 }
 
 function generate(definitions: Definition[]) {
@@ -329,9 +304,33 @@ function generate(definitions: Definition[]) {
     output += name + extend + " {\n";
     
     for(let prop of definition.props) {
-      output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n\t */\n";
+      output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n";
       
-      if(definition.type == "class") {
+      if(prop.type == "method") {
+        let params: string[] = [];
+        for(let param of prop.params) {
+          let name = generateFixParamName(param.name);
+          output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
+          let p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
+          params.push(p);
+        }
+        output += "\t */\n";
+        
+        let type = generateType(prop.types);
+        let staticKeyword = (prop.isStatic ? "static " : "");
+        if(prop.name == "[]") {
+          output += "\t" + staticKeyword + "[" + params.join(", ") + "]: " + type + ";\n";
+        }
+        else if(prop.name == definition.name) {
+          output += "\tconstructor(" + params.join(", ") + ");\n";
+        }
+        else {
+          output += "\t" + staticKeyword + prop.name + "(" + params.join(", ") + "): " + type + ";\n";
+        }
+      }
+      else if(definition.type == "class") {
+        output += "\t */\n";
+        
         let name = prop.name == "constructor" ? "'constructor'" : prop.name;
         let staticKeyword = (prop.isStatic ? "static " : "");
         let readonlyKeyword = (prop.readonly ? "readonly " : "");
@@ -340,37 +339,11 @@ function generate(definitions: Definition[]) {
         output += "\t" + staticKeyword + readonlyKeyword + name + ": " + type + ";\n";
       }
       else if(definition.type == "enum") {
+        output += "\t */\n";
+        
         output += "\t" + prop.name + " = " + prop.types[0].value + ",\n";
       }
       
-      output += "\n";
-    }
-    
-    for(let method of definition.methods) {
-      output += "\t/**\n\t * " + method.desc.join("\n\t * ") + "\n";
-      
-      let staticKeyword = (method.isStatic ? "static " : "");
-      let type = generateType(method.types);
-      let params: string[] = [];
-      for(let param of method.params) {
-        let name = generateFixParamName(param.name);
-        
-        output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
-        let p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
-        params.push(p);
-      }
-
-      output += "\t */\n";
-
-      if(method.name == "[]") {
-        output += "\t" + staticKeyword + "[" + params.join(", ") + "]: " + type + ";\n";
-      }
-      else if(method.name == definition.name) {
-        output += "\tconstructor(" + params.join(", ") + ");\n";
-      }
-      else {
-        output += "\t" + staticKeyword + method.name + "(" + params.join(", ") + "): " + type + ";\n";
-      }
       output += "\n";
     }
 
