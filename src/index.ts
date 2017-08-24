@@ -75,6 +75,9 @@ function parse(xml: JSDOM) {
   for(let definition of definitions) {
     result.push(parseDefinition(definition));
   }
+  
+  removeInheritedProperties(result);
+  
   return result
 }
 
@@ -282,6 +285,40 @@ function parseType(datatype: Element | null): TypeDefinition[] {
   return types;
 }
 
+function removeInheritedProperties(definitions: Definition[]) {
+  for(let definition of definitions) {
+    let list = getListOfPropsToBeRemovedFor(definition, definitions);
+    for(let prop of list.props) {
+      definition.props = definition.props.filter(p => p.name != prop);
+    }
+    for(let method of list.methods) {
+      definition.methods = definition.methods.filter(m => m.name != method);
+    }
+  }
+}
+
+function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Definition[]) {
+  let props: string[] = [];
+  let methods: string[] = [];
+  
+  if(definition.extend) {
+    let parent = definitions.find(d => d.name == definition.extend);
+    if(parent) {
+      for(let prop of parent.props) {
+        props.push(prop.name);
+      }
+      for(let method of parent.methods) {
+        methods.push(method.name);
+      }
+      let list = getListOfPropsToBeRemovedFor(parent, definitions);
+      props = props.concat(list.props);
+      methods = methods.concat(list.methods);
+    }
+  }
+
+  return { props, methods }
+}
+
 function generate(definitions: Definition[]) {
   let output = "";
 
@@ -316,7 +353,7 @@ function generate(definitions: Definition[]) {
       let type = generateType(method.types);
       let params: string[] = [];
       for(let param of method.params) {
-        let name = fixParamName(param.name);
+        let name = generateFixParamName(param.name);
         
         output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
         let p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
@@ -352,7 +389,7 @@ function generateType(types: TypeDefinition[]) {
   return output.join(" | ");
 }
 
-function fixParamName(name: string) {
+function generateFixParamName(name: string) {
   if(name == "for") {
     name = "for_";
   }

@@ -21,7 +21,7 @@ function convert(xmlFile) {
             xmlFile = fs_1.realpathSync(xmlFile);
             let file = yield readFile(xmlFile, "utf-8");
             let xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
-            let transformed = transform(xml);
+            let transformed = parse(xml);
             let result = generate(transformed);
             yield writeFile(xmlFile + ".d.ts", result);
             console.log("OK");
@@ -33,12 +33,13 @@ function convert(xmlFile) {
     });
 }
 exports.convert = convert;
-function transform(xml) {
+function parse(xml) {
     let result = [];
     let definitions = xml.window.document.documentElement.querySelectorAll(":root > package > classdef");
     for (let definition of definitions) {
         result.push(parseDefinition(definition));
     }
+    removeInheritedProperties(result);
     return result;
 }
 function parseDefinition(definition) {
@@ -217,6 +218,36 @@ function parseType(datatype) {
     }
     return types;
 }
+function removeInheritedProperties(definitions) {
+    for (let definition of definitions) {
+        let list = getListOfPropsToBeRemovedFor(definition, definitions);
+        for (let prop of list.props) {
+            definition.props = definition.props.filter(p => p.name != prop);
+        }
+        for (let method of list.methods) {
+            definition.methods = definition.methods.filter(m => m.name != method);
+        }
+    }
+}
+function getListOfPropsToBeRemovedFor(definition, definitions) {
+    let props = [];
+    let methods = [];
+    if (definition.extend) {
+        let parent = definitions.find(d => d.name == definition.extend);
+        if (parent) {
+            for (let prop of parent.props) {
+                props.push(prop.name);
+            }
+            for (let method of parent.methods) {
+                methods.push(method.name);
+            }
+            let list = getListOfPropsToBeRemovedFor(parent, definitions);
+            props = props.concat(list.props);
+            methods = methods.concat(list.methods);
+        }
+    }
+    return { props, methods };
+}
 function generate(definitions) {
     let output = "";
     for (let definition of definitions) {
@@ -244,7 +275,7 @@ function generate(definitions) {
             let type = generateType(method.types);
             let params = [];
             for (let param of method.params) {
-                let name = fixParamName(param.name);
+                let name = generateFixParamName(param.name);
                 output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
                 let p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
                 params.push(p);
@@ -272,7 +303,7 @@ function generateType(types) {
     }
     return output.join(" | ");
 }
-function fixParamName(name) {
+function generateFixParamName(name) {
     if (name == "for") {
         name = "for_";
     }
