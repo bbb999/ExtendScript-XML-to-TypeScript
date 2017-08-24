@@ -224,9 +224,9 @@ function parseDesc(element: Element) {
   }
   
   desc = desc.join("\n").split("\n");
-  desc = desc.map(d => d.replace(/  /g, "").trim()).filter(d => d != "");
+  desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d != "");
   
-  return desc
+  return desc;
 }
 
 function parseType(datatype: Element | null): TypeDefinition[] {
