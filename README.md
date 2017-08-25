@@ -1,4 +1,4 @@
-# ExtendScript XML to TypeScript
+# ExtendScript XML to TypeScript converter
 Convert XML definition files for ExtendScript Toolkit to TypeScript.
 
 ```
