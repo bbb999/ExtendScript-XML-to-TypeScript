@@ -22,7 +22,8 @@ function convert(xmlFile) {
             let file = yield readFile(xmlFile, "utf-8");
             let xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
             let transformed = parse(xml);
-            let result = generate(transformed);
+            let sorted = sort(transformed);
+            let result = generate(sorted);
             yield writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
             console.log("OK");
         }
@@ -267,6 +268,35 @@ function getListOfPropsToBeRemovedFor(definition, definitions) {
         }
     }
     return props;
+}
+function sort(definitions) {
+    for (let definition of definitions) {
+        definition.props.sort((a, b) => {
+            if (a.type != b.type) {
+                if (a.type < b.type) {
+                    return 1;
+                }
+                else if (a.type > b.type) {
+                    return -1;
+                }
+                else {
+                    return 0;
+                }
+            }
+            else {
+                if (a.name < b.name) {
+                    return -1;
+                }
+                else if (a.name > b.name) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            }
+        });
+    }
+    return definitions;
 }
 function generate(definitions) {
     let output = "";

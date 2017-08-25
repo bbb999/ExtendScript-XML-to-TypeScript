@@ -17,7 +17,9 @@ export async function convert(xmlFile: string) {
     
     let transformed = parse(xml);
     
-    let result = generate(transformed);
+    let sorted = sort(transformed);
+    
+    let result = generate(sorted);
     
     await writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
     
@@ -328,6 +330,36 @@ function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Defin
   }
 
   return props
+}
+
+function sort(definitions: Definition[]) {
+  for(let definition of definitions) {
+    definition.props.sort((a, b) => {
+      if(a.type != b.type) {
+        if (a.type < b.type) {
+          return 1;
+        }
+        else if (a.type > b.type) {
+          return -1;
+        }
+        else {
+          return 0;
+        }
+      }
+      else {
+        if (a.name < b.name) {
+          return -1;
+        }
+        else if (a.name > b.name) {
+          return 1;
+        }
+        else {
+          return 0;
+        }
+      }
+    })
+  }
+  return definitions
 }
 
 function generate(definitions: Definition[]) {
