@@ -446,5 +446,8 @@ function generateFixParamName(name: string) {
   else if(name == "return") {
     name = "return_";
   }
+  else if(name == "export") {
+    name = "export_";
+  }
   return name;
 }
