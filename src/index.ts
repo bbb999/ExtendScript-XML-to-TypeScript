@@ -156,7 +156,7 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
     type,
     isStatic,
     readonly: prop.getAttribute("rwaccess") == "readonly",
-    name: prop.getAttribute("name") || "",
+    name: (prop.getAttribute("name") || "").replace(/^\./, "").replace(/[^\[\]0-9a-zA-Z_$]/g, "_"),
     desc: parseDesc(prop),
     params: parseParameters(directFindAll(prop, ["parameters", "parameter"])),
     types: parseType(directFind(prop, ["datatype"])),
