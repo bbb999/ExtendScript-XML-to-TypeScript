@@ -289,6 +289,9 @@ function parseType(datatype: Element | undefined): TypeDefinition[] {
     else if(type.name == "bool") {
       type.name = "boolean";
     }
+    else if(type.name == "int" || type.name == "Int32" || type.name == "uint") {
+      type.name = "number";
+    }
     else if(type.name == "Measurement Unit (Number or String)=any") {
       type.name = "number";
       types.push({ name: "string", isArray: type.isArray })
