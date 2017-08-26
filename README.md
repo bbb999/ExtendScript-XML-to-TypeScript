@@ -1,5 +1,5 @@
-# ExtendScript XML definition files to TypeScript converter 
-Convert XML definition files for ExtendScript Toolkit to TypeScript.
+# ExtendScript XML definition files to TypeScript converter
+## Example usage
 
 ```
 npm i pravdomil/extendscript-xml-to-typescript -g
