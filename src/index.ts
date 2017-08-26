@@ -291,7 +291,7 @@ function parseType(datatype: Element | undefined): TypeDefinition[] {
     }
     else if(type.name == "Measurement Unit (Number or String)=any") {
       type.name = "number";
-      types.push({ name: "string", isArray: true })
+      types.push({ name: "string", isArray: type.isArray })
     }
     
     types.push(type)
