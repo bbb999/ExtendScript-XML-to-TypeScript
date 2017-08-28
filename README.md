@@ -1,4 +1,6 @@
 # ExtendScript XML definition files to TypeScript converter
+Used for create [types-for-adobe](https://github.com/pravdomil/types-for-adobe).
+
 ## Example usage
 
 ```
