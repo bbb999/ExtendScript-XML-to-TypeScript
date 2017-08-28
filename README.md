@@ -1,4 +1,4 @@
-# ExtendScript XML definition files to TypeScript converter
+# ExtendScript XML documentation files to TypeScript converter
 Check [how to use TypeScript for Adobe Products](https://github.com/pravdomil/types-for-adobe).
 
 ## Example usage
