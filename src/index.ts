@@ -152,7 +152,7 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
   else if(prop.nodeName == "method") { type = "method"; }
   else { throw new Error("Unknown property " + prop.nodeName); }
   
-  return {
+  let p = {
     type,
     isStatic,
     readonly: prop.getAttribute("rwaccess") == "readonly",
@@ -160,7 +160,17 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
     desc: parseDesc(prop),
     params: parseParameters(directFindAll(prop, ["parameters", "parameter"])),
     types: parseType(directFind(prop, ["datatype"])),
+  };
+
+  if(p.desc[0]) {
+    let canAccept = parseCanReturnAndAccept(p.desc[0]);
+    if(canAccept) {
+      p.types = canAccept.types;
+      p.desc[0] = canAccept.desc;
+    }
   }
+  
+  return p;
 }
 
 function parseParameters(parameters: Element[]): ParameterDefinition[] {
@@ -179,10 +189,11 @@ function parseParameters(parameters: Element[]): ParameterDefinition[] {
       param.types[0].isArray = true;
     }
     param.desc = param.desc.map(d => d.replace(/\(Optional\)/i, ""));
-    if(param.desc[0] && param.desc[0].includes("Can accept:")) {
-      let canAccept = parseCanAccept(param.desc[0]);
+    if(param.desc[0]) {
+      let canAccept = parseCanReturnAndAccept(param.desc[0]);
       if(canAccept) {
-        param.types = canAccept
+        param.types = canAccept.types;
+        param.desc[0] = canAccept.desc;
       }
     }
     
@@ -194,18 +205,26 @@ function parseParameters(parameters: Element[]): ParameterDefinition[] {
   return params;
 }
 
-function parseCanAccept(str: string): TypeDefinition[] | undefined {
+function parseCanReturnAndAccept(str: string): { types: TypeDefinition[], desc: string } | undefined {
   let types: TypeDefinition[] = [];
-  let words = str.replace(/^.*Can accept:/, "").replace(".", "");
-  if(words.includes("containing")) {
-    return
-  }
+  let regex = /^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/;
+  let match = regex.exec(str);
   
-  for(let word of words.split(/,| or /)) {
+  if(!match || match[2].includes("containing")) {
+    return;
+  }
+  let desc = match[1].trim();
+  let words = match[2].replace(/Can( also)? (accept|return):/g, ",");
+  
+  for(let word of words.split(/,| or |\./)) {
     let type: TypeDefinition = {
       name: word.trim(),
       isArray: false,
     };
+    
+    if(!type.name) {
+      continue;
+    }
 
     type.name = type.name.replace(/enumerators?/, "").trim();
     
@@ -245,7 +264,7 @@ function parseCanAccept(str: string): TypeDefinition[] | undefined {
     
     types.push(type);
   }
-  return types;
+  return { types, desc };
 }
 
 function parseDesc(element: Element) {

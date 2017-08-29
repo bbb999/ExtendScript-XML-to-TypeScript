@@ -113,7 +113,7 @@ function parseProperty(prop, isStatic) {
     else {
         throw new Error("Unknown property " + prop.nodeName);
     }
-    return {
+    let p = {
         type,
         isStatic,
         readonly: prop.getAttribute("rwaccess") == "readonly",
@@ -122,6 +122,14 @@ function parseProperty(prop, isStatic) {
         params: parseParameters(directFindAll(prop, ["parameters", "parameter"])),
         types: parseType(directFind(prop, ["datatype"])),
     };
+    if (p.desc[0]) {
+        let canAccept = parseCanReturnAndAccept(p.desc[0]);
+        if (canAccept) {
+            p.types = canAccept.types;
+            p.desc[0] = canAccept.desc;
+        }
+    }
+    return p;
 }
 function parseParameters(parameters) {
     let params = [];
@@ -138,10 +146,11 @@ function parseParameters(parameters) {
             param.types[0].isArray = true;
         }
         param.desc = param.desc.map(d => d.replace(/\(Optional\)/i, ""));
-        if (param.desc[0] && param.desc[0].includes("Can accept:")) {
-            let canAccept = parseCanAccept(param.desc[0]);
+        if (param.desc[0]) {
+            let canAccept = parseCanReturnAndAccept(param.desc[0]);
             if (canAccept) {
-                param.types = canAccept;
+                param.types = canAccept.types;
+                param.desc[0] = canAccept.desc;
             }
         }
         params.push(param);
@@ -149,17 +158,23 @@ function parseParameters(parameters) {
     }
     return params;
 }
-function parseCanAccept(str) {
+function parseCanReturnAndAccept(str) {
     let types = [];
-    let words = str.replace(/^.*Can accept:/, "").replace(".", "");
-    if (words.includes("containing")) {
+    let regex = /^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/;
+    let match = regex.exec(str);
+    if (!match || match[2].includes("containing")) {
         return;
     }
-    for (let word of words.split(/,| or /)) {
+    let desc = match[1].trim();
+    let words = match[2].replace(/Can( also)? (accept|return):/g, ",");
+    for (let word of words.split(/,| or |\./)) {
         let type = {
             name: word.trim(),
             isArray: false,
         };
+        if (!type.name) {
+            continue;
+        }
         type.name = type.name.replace(/enumerators?/, "").trim();
         if (type.name.match(/Arrays of Array of/)) {
             return;
@@ -198,7 +213,7 @@ function parseCanAccept(str) {
         }
         types.push(type);
     }
-    return types;
+    return { types, desc };
 }
 function parseDesc(element) {
     let desc = [];
