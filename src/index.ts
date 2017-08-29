@@ -244,7 +244,7 @@ function parseCanAccept(str: string): TypeDefinition[] | undefined {
     }
     
     types.push(type);
-}
+  }
   return types;
 }
 
