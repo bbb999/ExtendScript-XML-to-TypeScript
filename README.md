@@ -1,5 +1,7 @@
-# ExtendScript XML to TypeScript converter
-Convert XML definition files for ExtendScript Toolkit to TypeScript.
+# ExtendScript XML documentation to TypeScript converter
+Check [how to use TypeScript for Adobe Products](https://github.com/pravdomil/types-for-adobe).
+
+## Example usage
 
 ```
 npm i pravdomil/extendscript-xml-to-typescript -g
