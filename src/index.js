@@ -131,6 +131,20 @@ function parseProperty(prop, isStatic) {
     }
     return p;
 }
+function parseDesc(element) {
+    let desc = [];
+    let shortdesc = directFind(element, ["shortdesc"]);
+    if (shortdesc && shortdesc.textContent) {
+        desc.push(shortdesc.textContent);
+    }
+    let description = directFind(element, ["description"]);
+    if (description && description.textContent) {
+        desc.push(description.textContent);
+    }
+    desc = desc.join("\n").split("\n");
+    desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d != "");
+    return desc;
+}
 function parseParameters(parameters) {
     let params = [];
     let previousWasOptional = false;
@@ -214,20 +228,6 @@ function parseCanReturnAndAccept(str) {
         types.push(type);
     }
     return { types, desc };
-}
-function parseDesc(element) {
-    let desc = [];
-    let shortdesc = directFind(element, ["shortdesc"]);
-    if (shortdesc && shortdesc.textContent) {
-        desc.push(shortdesc.textContent);
-    }
-    let description = directFind(element, ["description"]);
-    if (description && description.textContent) {
-        desc.push(description.textContent);
-    }
-    desc = desc.join("\n").split("\n");
-    desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d != "");
-    return desc;
 }
 function parseType(datatype) {
     let types = [];

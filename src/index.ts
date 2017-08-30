@@ -173,6 +173,25 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
   return p;
 }
 
+function parseDesc(element: Element) {
+  let desc: string[] = [];
+
+  let shortdesc = directFind(element, ["shortdesc"]);
+  if(shortdesc && shortdesc.textContent) {
+    desc.push(shortdesc.textContent);
+  }
+
+  let description = directFind(element, ["description"]);
+  if(description && description.textContent) {
+    desc.push(description.textContent);
+  }
+
+  desc = desc.join("\n").split("\n");
+  desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d != "");
+
+  return desc;
+}
+
 function parseParameters(parameters: Element[]): ParameterDefinition[] {
   let params: ParameterDefinition[] = [];
   let previousWasOptional = false;
@@ -265,25 +284,6 @@ function parseCanReturnAndAccept(str: string): { types: TypeDefinition[], desc: 
     types.push(type);
   }
   return { types, desc };
-}
-
-function parseDesc(element: Element) {
-  let desc: string[] = [];
-  
-  let shortdesc = directFind(element, ["shortdesc"]);
-  if(shortdesc && shortdesc.textContent) {
-    desc.push(shortdesc.textContent);
-  }
-  
-  let description = directFind(element, ["description"]);
-  if(description && description.textContent) {
-    desc.push(description.textContent);
-  }
-  
-  desc = desc.join("\n").split("\n");
-  desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d != "");
-  
-  return desc;
 }
 
 function parseType(datatype: Element | undefined): TypeDefinition[] {
