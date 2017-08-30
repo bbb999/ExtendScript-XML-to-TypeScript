@@ -122,13 +122,7 @@ function parseProperty(prop, isStatic) {
         params: parseParameters(directFindAll(prop, ["parameters", "parameter"])),
         types: parseType(directFind(prop, ["datatype"])),
     };
-    if (p.desc[0]) {
-        let canAccept = parseCanReturnAndAccept(p.desc[0]);
-        if (canAccept) {
-            p.types = canAccept.types;
-            p.desc[0] = canAccept.desc;
-        }
-    }
+    parseCanReturnAndAccept(p);
     return p;
 }
 function parseDesc(element) {
@@ -160,28 +154,56 @@ function parseParameters(parameters) {
             param.types[0].isArray = true;
         }
         param.desc = param.desc.map(d => d.replace(/\(Optional\)/i, ""));
-        if (param.desc[0]) {
-            let canAccept = parseCanReturnAndAccept(param.desc[0]);
-            if (canAccept) {
-                param.types = canAccept.types;
-                param.desc[0] = canAccept.desc;
-            }
-        }
+        parseCanReturnAndAccept(param);
         params.push(param);
         previousWasOptional = previousWasOptional || param.optional;
     }
     return params;
 }
-function parseCanReturnAndAccept(str) {
-    let types = [];
+function parseCanReturnAndAccept(obj) {
+    let str = obj.desc[0];
+    if (!str) {
+        return;
+    }
     let regex = /^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/;
     let match = regex.exec(str);
     if (!match || match[2].includes("containing")) {
         return;
     }
-    let desc = match[1].trim();
-    let words = match[2].replace(/Can( also)? (accept|return):/g, ",");
-    for (let word of words.split(/,| or |\./)) {
+    let ok = false;
+    let canReturn = str.match(/^.*?(?:Can return:)([^.]*).*$/);
+    let canAccept = str.match(/^.*?(?:Can accept:)([^.]*).*$/);
+    let canAlsoAccept = str.match(/^.*?(?:Can also accept:)([^.]*).*$/);
+    if (canReturn) {
+        let result = parseCanReturnAndAcceptValue(canReturn[1]);
+        if (result) {
+            obj.types = obj.types.concat(result);
+            ok = true;
+        }
+    }
+    if (canAccept) {
+        let result = parseCanReturnAndAcceptValue(canAccept[1]);
+        if (result) {
+            obj.types = obj.types.concat(result);
+            ok = true;
+        }
+    }
+    if (canAlsoAccept) {
+        let result = parseCanReturnAndAcceptValue(canAlsoAccept[1]);
+        if (result) {
+            obj.types = obj.types.concat(result);
+            ok = true;
+        }
+    }
+    if (ok) {
+        obj.desc[0] = match[1].trim();
+        obj.types = obj.types.filter((type) => type.name != "any");
+    }
+}
+function parseCanReturnAndAcceptValue(str) {
+    let types = [];
+    let words = str.split(/,| or |\./);
+    for (let word of words) {
         let type = {
             name: word.trim(),
             isArray: false,
@@ -189,45 +211,60 @@ function parseCanReturnAndAccept(str) {
         if (!type.name) {
             continue;
         }
-        type.name = type.name.replace(/enumerators?/, "").trim();
-        if (type.name.match(/Arrays of Array of/)) {
+        else if (type.name.match(/Arrays of Array of/)) {
             return;
         }
-        else if (type.name == "Array of Reals") {
-            type.name = "number";
-            type.isArray = true;
-        }
-        else if (type.name.match(/Arrays? of 2 Reals/)) {
-            type.name = "[number, number]";
-        }
-        else if (type.name.match(/Arrays? of 3 Reals/)) {
-            type.name = "[number, number, number]";
-        }
-        else if (type.name.match(/Arrays? of 6 Reals/)) {
-            type.name = "[number, number, number, number, number, number]";
-        }
-        else if (type.name.match(/Arrays? of 2 Units/)) {
-            type.name = "[number | string, number | string]";
-        }
-        else if (type.name.match(/Arrays? of 2 Strings/)) {
-            type.name = "[string, string]";
-        }
-        else if (type.name.match(/(Short|Long) Integers?/)) {
-            type.name = "number";
-        }
-        else if (type.name.startsWith("Array of ")) {
-            type.name = type.name.replace(/^Array of (\S+?)s?$/, "$1").trim();
-            if (type.name == "Swatche") {
-                type.name = "Swatch";
-            }
-            type.isArray = true;
-        }
-        else if (type.name == "JavaScript Function") {
-            type.name = "Function";
-        }
+        parseTypeFixTypeName(type);
         types.push(type);
     }
-    return { types, desc };
+    return types;
+}
+function parseTypeFixTypeName(type) {
+    type.name = type.name.replace(/enumerators?/, "").trim();
+    if (type.name == "varies=any" || type.name == "Any") {
+        type.name = "any";
+    }
+    else if (type.name == "Undefined") {
+        type.name = "undefined";
+    }
+    else if (type.name == "bool") {
+        type.name = "boolean";
+    }
+    else if (type.name == "int" || type.name == "Int32" || type.name == "uint") {
+        type.name = "number";
+    }
+    else if (type.name == "Array of Reals") {
+        type.name = "number";
+        type.isArray = true;
+    }
+    else if (type.name.match(/Arrays? of 2 Reals/)) {
+        type.name = "[number, number]";
+    }
+    else if (type.name.match(/Arrays? of 3 Reals/)) {
+        type.name = "[number, number, number]";
+    }
+    else if (type.name.match(/Arrays? of 6 Reals/)) {
+        type.name = "[number, number, number, number, number, number]";
+    }
+    else if (type.name.match(/Arrays? of 2 Units/)) {
+        type.name = "[number | string, number | string]";
+    }
+    else if (type.name.match(/Arrays? of 2 Strings/)) {
+        type.name = "[string, string]";
+    }
+    else if (type.name.match(/(Short|Long) Integers?/)) {
+        type.name = "number";
+    }
+    else if (type.name.startsWith("Array of ")) {
+        type.name = type.name.replace(/^Array of (\S+?)s?$/, "$1").trim();
+        if (type.name == "Swatche") {
+            type.name = "Swatch";
+        }
+        type.isArray = true;
+    }
+    else if (type.name == "JavaScript Function") {
+        type.name = "Function";
+    }
 }
 function parseType(datatype) {
     let types = [];
@@ -239,22 +276,11 @@ function parseType(datatype) {
             isArray: !!directFind(datatype, ["array"]),
             value: valueElement ? valueElement.textContent || "" : undefined,
         };
-        if (type.name == "varies=any" || type.name == "Any") {
-            type.name = "any";
-        }
-        else if (type.name == "Undefined") {
-            type.name = "undefined";
-        }
-        else if (type.name == "bool") {
-            type.name = "boolean";
-        }
-        else if (type.name == "int" || type.name == "Int32" || type.name == "uint") {
-            type.name = "number";
-        }
-        else if (type.name == "Measurement Unit (Number or String)=any") {
+        if (type.name == "Measurement Unit (Number or String)=any") {
             type.name = "number";
             types.push({ name: "string", isArray: type.isArray });
         }
+        parseTypeFixTypeName(type);
         types.push(type);
     }
     else {
