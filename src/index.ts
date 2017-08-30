@@ -295,6 +295,9 @@ function parseTypeFixTypeName(type: TypeDefinition) {
   else if(type.name == "int" || type.name == "Int32" || type.name == "uint") {
     type.name = "number";
   }
+  else if(type.name == "Real") {
+    type.name = "number";
+  }
   else if(type.name == "Array of Reals") {
     type.name = "number";
     type.isArray = true;
