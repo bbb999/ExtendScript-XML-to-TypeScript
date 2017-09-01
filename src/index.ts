@@ -221,6 +221,7 @@ function parseCanReturnAndAccept(obj: { desc: string[], types: TypeDefinition[]}
     return;
   }
   
+  match[2] = match[2].replace("Can also accept:", " or ");
   let result = parseCanReturnAndAcceptValue(match[2]);
   
   if(result) {

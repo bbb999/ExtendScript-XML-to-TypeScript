@@ -169,6 +169,7 @@ function parseCanReturnAndAccept(obj) {
     if (!match || match[2].includes("containing") || match[2].match(/Arrays? of Arrays? of/)) {
         return;
     }
+    match[2] = match[2].replace("Can also accept:", " or ");
     let result = parseCanReturnAndAcceptValue(match[2]);
     if (result) {
         obj.desc[0] = match[1].trim();
