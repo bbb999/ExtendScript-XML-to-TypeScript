@@ -241,10 +241,13 @@ function parseTypeFixTypeName(type) {
     }
     else if (type.name.startsWith("Array of ")) {
         type.name = type.name.replace(/^Array of (\S+?)s?$/, "$1").trim();
+        type.isArray = true;
         if (type.name == "Swatche") {
             type.name = "Swatch";
         }
-        type.isArray = true;
+        else if (type.name == "Unit") {
+            type.name = "number";
+        }
     }
     else if (type.name == "JavaScript Function") {
         type.name = "Function";

@@ -301,8 +301,9 @@ function parseTypeFixTypeName(type: TypeDefinition) {
   }
   else if(type.name.startsWith("Array of ")) {
     type.name = type.name.replace(/^Array of (\S+?)s?$/, "$1").trim();
-    if(type.name == "Swatche") { type.name = "Swatch" }
     type.isArray = true;
+    if(type.name == "Swatche") { type.name = "Swatch" }
+    else if(type.name == "Unit") { type.name = "number" }
   }
   else if(type.name == "JavaScript Function") {
     type.name = "Function"
