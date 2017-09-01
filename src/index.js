@@ -165,54 +165,27 @@ function parseCanReturnAndAccept(obj) {
     if (!str) {
         return;
     }
-    let regex = /^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/;
-    let match = regex.exec(str);
-    if (!match || match[2].includes("containing")) {
+    let match = str.match(/^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/);
+    if (!match || match[2].includes("containing") || match[2].match(/Arrays? of Arrays? of/)) {
         return;
     }
-    let ok = false;
-    let canReturn = str.match(/^.*?(?:Can return:)([^.]*).*$/);
-    let canAccept = str.match(/^.*?(?:Can accept:)([^.]*).*$/);
-    let canAlsoAccept = str.match(/^.*?(?:Can also accept:)([^.]*).*$/);
-    if (canReturn) {
-        let result = parseCanReturnAndAcceptValue(canReturn[1]);
-        if (result) {
-            obj.types = obj.types.concat(result);
-            ok = true;
-        }
-    }
-    if (canAccept) {
-        let result = parseCanReturnAndAcceptValue(canAccept[1]);
-        if (result) {
-            obj.types = obj.types.concat(result);
-            ok = true;
-        }
-    }
-    if (canAlsoAccept) {
-        let result = parseCanReturnAndAcceptValue(canAlsoAccept[1]);
-        if (result) {
-            obj.types = obj.types.concat(result);
-            ok = true;
-        }
-    }
-    if (ok) {
+    let result = parseCanReturnAndAcceptValue(match[2]);
+    if (result) {
         obj.desc[0] = match[1].trim();
+        obj.types = obj.types.concat(result);
         obj.types = obj.types.filter((type) => type.name != "any");
     }
 }
 function parseCanReturnAndAcceptValue(str) {
     let types = [];
-    let words = str.split(/,| or |\./);
+    let words = str.split(/,| or/);
     for (let word of words) {
         let type = {
             name: word.trim(),
             isArray: false,
         };
-        if (!type.name) {
+        if (!type.name || type.name == ".") {
             continue;
-        }
-        else if (type.name.match(/Arrays of Array of/)) {
-            return;
         }
         parseTypeFixTypeName(type);
         types.push(type);
@@ -220,7 +193,10 @@ function parseCanReturnAndAcceptValue(str) {
     return types;
 }
 function parseTypeFixTypeName(type) {
-    type.name = type.name.replace(/enumerators?/, "").trim();
+    type.name = type.name.trim();
+    type.name = type.name.replace(/enumerators?/, "");
+    type.name = type.name.replace(/\.$/, "");
+    type.name = type.name.trim();
     if (type.name == "varies=any" || type.name == "Any") {
         type.name = "any";
     }
@@ -233,8 +209,12 @@ function parseTypeFixTypeName(type) {
     else if (type.name == "int" || type.name == "Int32" || type.name == "uint") {
         type.name = "number";
     }
-    else if (type.name == "Real") {
+    else if (type.name.match(/^(Unit|Real)\s*(\([\d.]+ - [\d.]+( points)?\))?$/)) {
         type.name = "number";
+    }
+    else if (type.name == "Array of 4 Units (0 - 8640 points)") {
+        type.name = "[number, number, number, number]";
+        type.isArray = false;
     }
     else if (type.name == "Array of Reals") {
         type.name = "number";
