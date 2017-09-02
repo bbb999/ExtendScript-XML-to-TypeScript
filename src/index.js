@@ -204,10 +204,13 @@ function parseTypeFixTypeName(type) {
     else if (type.name == "Undefined") {
         type.name = "undefined";
     }
-    else if (type.name == "bool") {
+    else if (type.name == "String") {
+        type.name = "string";
+    }
+    else if (type.name == "Boolean" || type.name == "bool") {
         type.name = "boolean";
     }
-    else if (type.name == "int" || type.name == "Int32" || type.name == "uint") {
+    else if (type.name == "Number" || type.name == "int" || type.name == "Int32" || type.name == "uint") {
         type.name = "number";
     }
     else if (type.name.match(/^(Unit|Real)\s*(\([\d.]+ - [\d.]+( points)?\))?$/)) {
