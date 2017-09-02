@@ -248,6 +248,11 @@ function parseCanReturnAndAcceptValue(str: string): TypeDefinition[] | undefined
     
     types.push(type);
   }
+
+  types = types.filter((type, index, self) => {
+    let foundIndex = self.findIndex((t) => t.name == type.name && t.isArray == type.isArray);
+    return foundIndex == index;
+  });
   
   return types;
 }
