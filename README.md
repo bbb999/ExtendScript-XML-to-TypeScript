@@ -5,7 +5,7 @@ Usage:
 npm i pravdomil/extendscript-xml-to-typescript -g
 
 # convert JavaScript types
-extendscript-xml-to-typescript "/Library/Application\ Support/Adobe/Scripting Dictionaries CC/CommonFiles/javascript.xml"
+extendscript-xml-to-typescript "/Library/Application Support/Adobe/Scripting Dictionaries CC/CommonFiles/javascript.xml"
 cat "/Library/Application Support/Adobe/Scripting Dictionaries CC/CommonFiles/javascript.d.ts"
 
 # convert InDesign types
