@@ -1,4 +1,4 @@
-# Converts ExtendScript XML documentation files into TypeScript declaration files.
+## Convert ExtendScript XML documentation into TypeScript declaration
 Usage:
 ```bash
 # install package
