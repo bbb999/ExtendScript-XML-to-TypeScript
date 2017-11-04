@@ -2,8 +2,7 @@
 Check [how to use TypeScript for Adobe Products](https://github.com/pravdomil/types-for-adobe).
 
 ## Example usage
-
-```
+```bash
 npm i pravdomil/extendscript-xml-to-typescript -g
 
 extendscript-xml-to-typescript /Library/Application Support/Adobe/Scripting Dictionaries CC/CommonFiles/javascript.xml
