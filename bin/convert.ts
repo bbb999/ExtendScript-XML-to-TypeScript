@@ -6,12 +6,12 @@ let ok = false;
 
 program
   .version(require("../package.json").version)
-  .arguments('<xml_files...>')
+  .arguments("<xml_files...>")
   .action(async (arg, command) => {
     ok = true;
     
-    for(let file of arg) {
-      if(typeof file == "string") {
+    for (const file of arg) {
+      if (typeof file === "string") {
         await convert(file);
       }
     }
@@ -19,6 +19,6 @@ program
   })
   .parse(process.argv);
 
-if(!ok) {
-  program.help()
+if (!ok) {
+  program.help();
 }

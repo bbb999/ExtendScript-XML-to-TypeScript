@@ -14,11 +14,11 @@ const index_1 = require("../src/index");
 let ok = false;
 program
     .version(require("../package.json").version)
-    .arguments('<xml_files...>')
+    .arguments("<xml_files...>")
     .action((arg, command) => __awaiter(this, void 0, void 0, function* () {
     ok = true;
-    for (let file of arg) {
-        if (typeof file == "string") {
+    for (const file of arg) {
+        if (typeof file === "string") {
             yield index_1.convert(file);
         }
     }

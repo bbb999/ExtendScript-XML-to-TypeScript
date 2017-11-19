@@ -2,8 +2,8 @@ import { readFile as fsReadFileOriginal, realpathSync, writeFile as fsWriteFileO
 import { promisify } from "util";
 import { JSDOM } from "jsdom";
 import { basename } from "path";
-let readFile = promisify(fsReadFileOriginal);
-let writeFile = promisify(fsWriteFileOriginal);
+const readFile = promisify(fsReadFileOriginal);
+const writeFile = promisify(fsWriteFileOriginal);
 
 export async function convert(xmlFile: string) {
   try {
@@ -11,21 +11,21 @@ export async function convert(xmlFile: string) {
     
     xmlFile = realpathSync(xmlFile);
     
-    let file = await readFile(xmlFile, "utf-8");
+    const file = await readFile(xmlFile, "utf-8");
     
-    let xml = new JSDOM(file, { contentType: "text/xml" });
+    const xml = new JSDOM(file, { contentType: "text/xml" });
     
-    let transformed = parse(xml);
+    const transformed = parse(xml);
     
-    let sorted = sort(transformed);
+    const sorted = sort(transformed);
     
-    let result = generate(sorted);
+    const result = generate(sorted);
     
     await writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
     
     console.log("OK");
-  }
-  catch (e) {
+    
+  } catch (e) {
     console.error("Error occurred during converting file: \"" + xmlFile + "\"");
     console.error(e.message + "\n");
   }
@@ -64,16 +64,15 @@ interface ParameterDefinition {
 
 function directFindAll(element: Element, selector: string[]) {
   let result: Element[] = [];
-  let currentSelector = selector.shift();
+  const currentSelector = selector.shift();
   
-  if(currentSelector) {
-    for(let child of Array.from(element.children)) {
-      if(child.nodeName == currentSelector) {
+  if (currentSelector) {
+    for (const child of Array.from(element.children)) {
+      if (child.nodeName == currentSelector) {
         result = result.concat(directFindAll(child, selector.slice()));
       }
     }
-  }
-  else {
+  } else {
     result.push(element);
   }
   
@@ -81,35 +80,34 @@ function directFindAll(element: Element, selector: string[]) {
 }
 
 function directFind(element: Element, selector: string[]): Element | undefined {
-  let currentSelector = selector.shift();
+  const currentSelector = selector.shift();
   
-  if(currentSelector) {
-    for(let child of Array.from(element.children)) {
-      if(child.nodeName == currentSelector) {
-        let found = directFind(child, selector.slice());
-        if(found) {
+  if (currentSelector) {
+    for (const child of Array.from(element.children)) {
+      if (child.nodeName == currentSelector) {
+        const found = directFind(child, selector.slice());
+        if (found) {
           return found;
         }
       }
     }
-  }
-  else {
-    return element
+  } else {
+    return element;
   }
 }
 
 function parse(xml: JSDOM) {
-  let result: Definition[] = [];
+  const result: Definition[] = [];
   
-  let definitions = directFindAll(xml.window.document.documentElement, ["package", "classdef"]);
+  const definitions = directFindAll(xml.window.document.documentElement, ["package", "classdef"]);
   
-  for(let definition of definitions) {
+  for (const definition of definitions) {
     result.push(parseDefinition(definition));
   }
   
   removeInheritedProperties(result);
   
-  return result
+  return result;
 }
 
 function parseDefinition(definition: Element): Definition {
@@ -117,33 +115,33 @@ function parseDefinition(definition: Element): Definition {
   
   if (definition.getAttribute("enumeration")) {
     type = "enum";
-  }
-  else if (definition.getAttribute("dynamic")) {
-    type = "class"
-  }
-  else {
-    throw new Error("Unknown definition")
-  }
-  
-  let props: PropertyDefinition[] = [];
-  
-  for (let element of directFindAll(definition,["elements"])) {
-    let isStatic = element.getAttribute("type") == "class";
     
-    for (let property of Array.from(element.children)) {
-      let p = parseProperty(property, isStatic);
+  } else if (definition.getAttribute("dynamic")) {
+    type = "class";
+    
+  } else {
+    throw new Error("Unknown definition");
+  }
+  
+  const props: PropertyDefinition[] = [];
+  
+  for (const element of directFindAll(definition, ["elements"])) {
+    const isStatic = element.getAttribute("type") == "class";
+    
+    for (const property of Array.from(element.children)) {
+      const p = parseProperty(property, isStatic);
       props.push(p);
     }
   }
   
-  let extend = directFind(definition, ["superclass"]);
+  const extend = directFind(definition, ["superclass"]);
   return {
     type,
     name: definition.getAttribute("name") || "",
     desc: parseDesc(definition),
     extend: extend ? extend.innerHTML || undefined : undefined,
     props,
-  }
+  };
 }
 
 function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
@@ -152,7 +150,7 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
   else if(prop.nodeName == "method") { type = "method"; }
   else { throw new Error("Unknown property " + prop.nodeName); }
   
-  let p = {
+  const p = {
     type,
     isStatic,
     readonly: prop.getAttribute("rwaccess") == "readonly",
@@ -170,13 +168,13 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
 function parseDesc(element: Element) {
   let desc: string[] = [];
 
-  let shortdesc = directFind(element, ["shortdesc"]);
-  if(shortdesc && shortdesc.textContent) {
+  const shortdesc = directFind(element, ["shortdesc"]);
+  if (shortdesc && shortdesc.textContent) {
     desc.push(shortdesc.textContent);
   }
 
-  let description = directFind(element, ["description"]);
-  if(description && description.textContent) {
+  const description = directFind(element, ["description"]);
+  if (description && description.textContent) {
     desc.push(description.textContent);
   }
 
@@ -187,17 +185,17 @@ function parseDesc(element: Element) {
 }
 
 function parseParameters(parameters: Element[]): ParameterDefinition[] {
-  let params: ParameterDefinition[] = [];
+  const params: ParameterDefinition[] = [];
   let previousWasOptional = false;
   
-  for(let parameter of parameters) {
-    let param: ParameterDefinition = {
+  for (const parameter of parameters) {
+    const param: ParameterDefinition = {
       name: parameter.getAttribute("name") || "",
       desc: parseDesc(parameter),
       optional: previousWasOptional || !!parameter.getAttribute("optional"),
       types: parseType(directFind(parameter, ["datatype"])),
     };
-    if(param.name.includes("...")) {
+    if (param.name.includes("...")) {
       param.name = "...rest";
       param.types[0].isArray = true;
     }
@@ -213,18 +211,18 @@ function parseParameters(parameters: Element[]): ParameterDefinition[] {
 }
 
 function parseCanReturnAndAccept(obj: { desc: string[], types: TypeDefinition[]}) {
-  let str = obj.desc[0];
-  if(!str) { return; }
+  const str = obj.desc[0];
+  if (!str) { return; }
   
-  let match = str.match(/^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/);
-  if(!match || match[2].includes("containing") || match[2].match(/Arrays? of Arrays? of/)) {
+  const match = str.match(/^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/);
+  if (!match || match[2].includes("containing") || match[2].match(/Arrays? of Arrays? of/)) {
     return;
   }
   
   match[2] = match[2].replace("Can also accept:", " or ");
-  let result = parseCanReturnAndAcceptValue(match[2]);
+  const result = parseCanReturnAndAcceptValue(match[2]);
   
-  if(result) {
+  if (result) {
     obj.desc[0] = match[1].trim();
     obj.types = obj.types.concat(result);
     obj.types = obj.types.filter((type) => type.name != "any");
@@ -232,16 +230,16 @@ function parseCanReturnAndAccept(obj: { desc: string[], types: TypeDefinition[]}
 }
 
 function parseCanReturnAndAcceptValue(str: string): TypeDefinition[] | undefined {
-  let types:TypeDefinition[] = [];
-  let words = str.split(/,| or/);
+  let types: TypeDefinition[] = [];
+  const words = str.split(/,| or/);
   
-  for(let word of words) {
-    let type: TypeDefinition = {
+  for (const word of words) {
+    const type: TypeDefinition = {
       name: word.trim(),
       isArray: false,
     };
     
-    if(!type.name || type.name == ".") {
+    if (!type.name || type.name == ".") {
       continue;
     }
     parseTypeFixTypeName(type);
@@ -250,7 +248,7 @@ function parseCanReturnAndAcceptValue(str: string): TypeDefinition[] | undefined
   }
 
   types = types.filter((type, index, self) => {
-    let foundIndex = self.findIndex((t) => t.name == type.name && t.isArray == type.isArray);
+    const foundIndex = self.findIndex((t) => t.name == type.name && t.isArray == type.isArray);
     return foundIndex == index;
   });
   
@@ -267,7 +265,7 @@ function parseTypeFixTypeName(type: TypeDefinition) {
     type.name = "any";
   }
   else if(type.name == "Undefined") {
-    type.name = "undefined"
+    type.name = "undefined";
   }
   else if(type.name == "String") {
     type.name = "string";
@@ -290,22 +288,22 @@ function parseTypeFixTypeName(type: TypeDefinition) {
     type.isArray = true;
   }
   else if(type.name.match(/Arrays? of 2 Reals/)) {
-    type.name = "[number, number]"
+    type.name = "[number, number]";
   }
   else if(type.name.match(/Arrays? of 3 Reals/)) {
-    type.name = "[number, number, number]"
+    type.name = "[number, number, number]";
   }
   else if(type.name.match(/Arrays? of 6 Reals/)) {
-    type.name = "[number, number, number, number, number, number]"
+    type.name = "[number, number, number, number, number, number]";
   }
   else if(type.name.match(/Arrays? of 2 Units/)) {
-    type.name = "[number | string, number | string]"
+    type.name = "[number | string, number | string]";
   }
   else if(type.name.match(/Arrays? of 2 Strings/)) {
-    type.name = "[string, string]"
+    type.name = "[string, string]";
   }
   else if(type.name.match(/(Short|Long) Integers?/)) {
-    type.name = "number"
+    type.name = "number";
   }
   else if(type.name.startsWith("Array of ")) {
     type.name = type.name.replace(/^Array of (\S+?)s?$/, "$1").trim();
@@ -316,46 +314,46 @@ function parseTypeFixTypeName(type: TypeDefinition) {
     type.name = "Swatch";
   }
   else if(type.name == "JavaScript Function") {
-    type.name = "Function"
+    type.name = "Function";
   }
 }
 
 function parseType(datatype: Element | undefined): TypeDefinition[] {
-  let types: TypeDefinition[] = [];
+  const types: TypeDefinition[] = [];
   
-  if(datatype) {
-    let typeElement = directFind(datatype, ["type"]);
-    let valueElement = directFind(datatype, ["value"]);
+  if (datatype) {
+    const typeElement = directFind(datatype, ["type"]);
+    const valueElement = directFind(datatype, ["value"]);
     
-    let type: TypeDefinition = {
+    const type: TypeDefinition = {
       name: typeElement ? typeElement.textContent || "" : "",
       isArray: !!directFind(datatype, ["array"]),
       value: valueElement ? valueElement.textContent || "" : undefined,
     };
     
-    if(type.name == "Measurement Unit (Number or String)=any") {
+    if (type.name == "Measurement Unit (Number or String)=any") {
       type.name = "number";
-      types.push({ name: "string", isArray: type.isArray })
+      types.push({ name: "string", isArray: type.isArray });
     }
     
     parseTypeFixTypeName(type);
     
-    types.push(type)
-  }
-  else {
+    types.push(type);
+    
+  } else {
     types.push({
       name: "void",
       isArray: false,
-    })
+    });
   }
   
   return types;
 }
 
 function removeInheritedProperties(definitions: Definition[]) {
-  for(let definition of definitions) {
-    let props = getListOfPropsToBeRemovedFor(definition, definitions);
-    for(let prop of props) {
+  for (const definition of definitions) {
+    const props = getListOfPropsToBeRemovedFor(definition, definitions);
+    for (const prop of props) {
       definition.props = definition.props.filter(p => p.name != prop);
     }
   }
@@ -364,18 +362,18 @@ function removeInheritedProperties(definitions: Definition[]) {
 function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Definition[]) {
   let props: string[] = [];
   
-  if(definition.extend) {
-    let parent = definitions.find(d => d.name == definition.extend);
-    if(parent) {
-      for(let prop of parent.props) {
+  if (definition.extend) {
+    const parent = definitions.find(d => d.name == definition.extend);
+    if (parent) {
+      for (const prop of parent.props) {
         props.push(prop.name);
       }
-      let p = getListOfPropsToBeRemovedFor(parent, definitions);
+      const p = getListOfPropsToBeRemovedFor(parent, definitions);
       props = props.concat(p);
     }
   }
 
-  return props
+  return props;
 }
 
 function sort(definitions: Definition[]) {
@@ -461,15 +459,15 @@ function generate(definitions: Definition[]) {
       output += "\n";
     }
 
-    output += "}\n\n"
+    output += "}\n\n";
   }
   return output;
 }
 
 function generateType(types: TypeDefinition[]) {
-  let output: string[] = [];
+  const output: string[] = [];
   
-  for(let type of types) {
+  for (const type of types) {
     output.push(type.name + (type.isArray ? "[]" : ""));
   }
   

@@ -12,18 +12,18 @@ const fs_1 = require("fs");
 const util_1 = require("util");
 const jsdom_1 = require("jsdom");
 const path_1 = require("path");
-let readFile = util_1.promisify(fs_1.readFile);
-let writeFile = util_1.promisify(fs_1.writeFile);
+const readFile = util_1.promisify(fs_1.readFile);
+const writeFile = util_1.promisify(fs_1.writeFile);
 function convert(xmlFile) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.info("Converting \"" + path_1.basename(xmlFile) + "\"");
             xmlFile = fs_1.realpathSync(xmlFile);
-            let file = yield readFile(xmlFile, "utf-8");
-            let xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
-            let transformed = parse(xml);
-            let sorted = sort(transformed);
-            let result = generate(sorted);
+            const file = yield readFile(xmlFile, "utf-8");
+            const xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
+            const transformed = parse(xml);
+            const sorted = sort(transformed);
+            const result = generate(sorted);
             yield writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
             console.log("OK");
         }
@@ -36,9 +36,9 @@ function convert(xmlFile) {
 exports.convert = convert;
 function directFindAll(element, selector) {
     let result = [];
-    let currentSelector = selector.shift();
+    const currentSelector = selector.shift();
     if (currentSelector) {
-        for (let child of Array.from(element.children)) {
+        for (const child of Array.from(element.children)) {
             if (child.nodeName == currentSelector) {
                 result = result.concat(directFindAll(child, selector.slice()));
             }
@@ -50,11 +50,11 @@ function directFindAll(element, selector) {
     return result;
 }
 function directFind(element, selector) {
-    let currentSelector = selector.shift();
+    const currentSelector = selector.shift();
     if (currentSelector) {
-        for (let child of Array.from(element.children)) {
+        for (const child of Array.from(element.children)) {
             if (child.nodeName == currentSelector) {
-                let found = directFind(child, selector.slice());
+                const found = directFind(child, selector.slice());
                 if (found) {
                     return found;
                 }
@@ -66,9 +66,9 @@ function directFind(element, selector) {
     }
 }
 function parse(xml) {
-    let result = [];
-    let definitions = directFindAll(xml.window.document.documentElement, ["package", "classdef"]);
-    for (let definition of definitions) {
+    const result = [];
+    const definitions = directFindAll(xml.window.document.documentElement, ["package", "classdef"]);
+    for (const definition of definitions) {
         result.push(parseDefinition(definition));
     }
     removeInheritedProperties(result);
@@ -85,15 +85,15 @@ function parseDefinition(definition) {
     else {
         throw new Error("Unknown definition");
     }
-    let props = [];
-    for (let element of directFindAll(definition, ["elements"])) {
-        let isStatic = element.getAttribute("type") == "class";
-        for (let property of Array.from(element.children)) {
-            let p = parseProperty(property, isStatic);
+    const props = [];
+    for (const element of directFindAll(definition, ["elements"])) {
+        const isStatic = element.getAttribute("type") == "class";
+        for (const property of Array.from(element.children)) {
+            const p = parseProperty(property, isStatic);
             props.push(p);
         }
     }
-    let extend = directFind(definition, ["superclass"]);
+    const extend = directFind(definition, ["superclass"]);
     return {
         type,
         name: definition.getAttribute("name") || "",
@@ -113,7 +113,7 @@ function parseProperty(prop, isStatic) {
     else {
         throw new Error("Unknown property " + prop.nodeName);
     }
-    let p = {
+    const p = {
         type,
         isStatic,
         readonly: prop.getAttribute("rwaccess") == "readonly",
@@ -127,11 +127,11 @@ function parseProperty(prop, isStatic) {
 }
 function parseDesc(element) {
     let desc = [];
-    let shortdesc = directFind(element, ["shortdesc"]);
+    const shortdesc = directFind(element, ["shortdesc"]);
     if (shortdesc && shortdesc.textContent) {
         desc.push(shortdesc.textContent);
     }
-    let description = directFind(element, ["description"]);
+    const description = directFind(element, ["description"]);
     if (description && description.textContent) {
         desc.push(description.textContent);
     }
@@ -140,10 +140,10 @@ function parseDesc(element) {
     return desc;
 }
 function parseParameters(parameters) {
-    let params = [];
+    const params = [];
     let previousWasOptional = false;
-    for (let parameter of parameters) {
-        let param = {
+    for (const parameter of parameters) {
+        const param = {
             name: parameter.getAttribute("name") || "",
             desc: parseDesc(parameter),
             optional: previousWasOptional || !!parameter.getAttribute("optional"),
@@ -161,16 +161,16 @@ function parseParameters(parameters) {
     return params;
 }
 function parseCanReturnAndAccept(obj) {
-    let str = obj.desc[0];
+    const str = obj.desc[0];
     if (!str) {
         return;
     }
-    let match = str.match(/^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/);
+    const match = str.match(/^(.*?)(?:Can(?: also)? (?:accept|return):)(.*)$/);
     if (!match || match[2].includes("containing") || match[2].match(/Arrays? of Arrays? of/)) {
         return;
     }
     match[2] = match[2].replace("Can also accept:", " or ");
-    let result = parseCanReturnAndAcceptValue(match[2]);
+    const result = parseCanReturnAndAcceptValue(match[2]);
     if (result) {
         obj.desc[0] = match[1].trim();
         obj.types = obj.types.concat(result);
@@ -179,9 +179,9 @@ function parseCanReturnAndAccept(obj) {
 }
 function parseCanReturnAndAcceptValue(str) {
     let types = [];
-    let words = str.split(/,| or/);
-    for (let word of words) {
-        let type = {
+    const words = str.split(/,| or/);
+    for (const word of words) {
+        const type = {
             name: word.trim(),
             isArray: false,
         };
@@ -192,7 +192,7 @@ function parseCanReturnAndAcceptValue(str) {
         types.push(type);
     }
     types = types.filter((type, index, self) => {
-        let foundIndex = self.findIndex((t) => t.name == type.name && t.isArray == type.isArray);
+        const foundIndex = self.findIndex((t) => t.name == type.name && t.isArray == type.isArray);
         return foundIndex == index;
     });
     return types;
@@ -259,11 +259,11 @@ function parseTypeFixTypeName(type) {
     }
 }
 function parseType(datatype) {
-    let types = [];
+    const types = [];
     if (datatype) {
-        let typeElement = directFind(datatype, ["type"]);
-        let valueElement = directFind(datatype, ["value"]);
-        let type = {
+        const typeElement = directFind(datatype, ["type"]);
+        const valueElement = directFind(datatype, ["value"]);
+        const type = {
             name: typeElement ? typeElement.textContent || "" : "",
             isArray: !!directFind(datatype, ["array"]),
             value: valueElement ? valueElement.textContent || "" : undefined,
@@ -284,9 +284,9 @@ function parseType(datatype) {
     return types;
 }
 function removeInheritedProperties(definitions) {
-    for (let definition of definitions) {
-        let props = getListOfPropsToBeRemovedFor(definition, definitions);
-        for (let prop of props) {
+    for (const definition of definitions) {
+        const props = getListOfPropsToBeRemovedFor(definition, definitions);
+        for (const prop of props) {
             definition.props = definition.props.filter(p => p.name != prop);
         }
     }
@@ -294,12 +294,12 @@ function removeInheritedProperties(definitions) {
 function getListOfPropsToBeRemovedFor(definition, definitions) {
     let props = [];
     if (definition.extend) {
-        let parent = definitions.find(d => d.name == definition.extend);
+        const parent = definitions.find(d => d.name == definition.extend);
         if (parent) {
-            for (let prop of parent.props) {
+            for (const prop of parent.props) {
                 props.push(prop.name);
             }
-            let p = getListOfPropsToBeRemovedFor(parent, definitions);
+            const p = getListOfPropsToBeRemovedFor(parent, definitions);
             props = props.concat(p);
         }
     }
@@ -383,8 +383,8 @@ function generate(definitions) {
     return output;
 }
 function generateType(types) {
-    let output = [];
-    for (let type of types) {
+    const output = [];
+    for (const type of types) {
         output.push(type.name + (type.isArray ? "[]" : ""));
     }
     return output.join(" | ");
