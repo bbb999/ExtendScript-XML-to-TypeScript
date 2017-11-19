@@ -7,10 +7,10 @@ let ok = false;
 program
   .version(require("../package.json").version)
   .arguments('<xml_files...>')
-  .action(async (...arg) => {
+  .action(async (arg, command) => {
     ok = true;
     
-    for(let file of arg[0]) {
+    for(let file of arg) {
       if(typeof file == "string") {
         await convert(file);
       }

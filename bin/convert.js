@@ -15,9 +15,9 @@ let ok = false;
 program
     .version(require("../package.json").version)
     .arguments('<xml_files...>')
-    .action((...arg) => __awaiter(this, void 0, void 0, function* () {
+    .action((arg, command) => __awaiter(this, void 0, void 0, function* () {
     ok = true;
-    for (let file of arg[0]) {
+    for (let file of arg) {
         if (typeof file == "string") {
             yield index_1.convert(file);
         }
