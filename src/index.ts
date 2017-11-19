@@ -68,7 +68,7 @@ function directFindAll(element: Element, selector: string[]) {
     
     if (currentSelector) {
         for (const child of Array.from(element.children)) {
-            if (child.nodeName == currentSelector) {
+            if (child.nodeName === currentSelector) {
                 result = result.concat(directFindAll(child, selector.slice()));
             }
         }
@@ -84,7 +84,7 @@ function directFind(element: Element, selector: string[]): Element | undefined {
     
     if (currentSelector) {
         for (const child of Array.from(element.children)) {
-            if (child.nodeName == currentSelector) {
+            if (child.nodeName === currentSelector) {
                 const found = directFind(child, selector.slice());
                 if (found) {
                     return found;
@@ -126,7 +126,7 @@ function parseDefinition(definition: Element): Definition {
     const props: PropertyDefinition[] = [];
     
     for (const element of directFindAll(definition, ["elements"])) {
-        const isStatic = element.getAttribute("type") == "class";
+        const isStatic = element.getAttribute("type") === "class";
         
         for (const property of Array.from(element.children)) {
             const p = parseProperty(property, isStatic);
@@ -146,10 +146,10 @@ function parseDefinition(definition: Element): Definition {
 
 function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
     let type: PropertyDefinition["type"];
-    if (prop.nodeName == "property") {
+    if (prop.nodeName === "property") {
         type = "property";
         
-    } else if (prop.nodeName == "method") {
+    } else if (prop.nodeName === "method") {
         type = "method";
         
     } else {
@@ -159,7 +159,7 @@ function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
     const p = {
         type,
         isStatic,
-        readonly: prop.getAttribute("rwaccess") == "readonly",
+        readonly: prop.getAttribute("rwaccess") === "readonly",
         name: (prop.getAttribute("name") || "").replace(/^\./, "").replace(/[^\[\]0-9a-zA-Z_$]/g, "_"),
         desc: parseDesc(prop),
         params: parseParameters(directFindAll(prop, ["parameters", "parameter"])),
@@ -185,7 +185,7 @@ function parseDesc(element: Element) {
     }
     
     desc = desc.join("\n").split("\n");
-    desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d != "");
+    desc = desc.map(d => d.replace(/ {2}/g, "").trim()).filter(d => d !== "");
     
     return desc;
 }
@@ -231,7 +231,7 @@ function parseCanReturnAndAccept(obj: { desc: string[], types: TypeDefinition[]}
     if (result) {
         obj.desc[0] = match[1].trim();
         obj.types = obj.types.concat(result);
-        obj.types = obj.types.filter((type) => type.name != "any");
+        obj.types = obj.types.filter((type) => type.name !== "any");
     }
 }
 
@@ -245,7 +245,7 @@ function parseCanReturnAndAcceptValue(str: string): TypeDefinition[] | undefined
             isArray: false,
         };
         
-        if (!type.name || type.name == ".") {
+        if (!type.name || type.name === ".") {
             continue;
         }
         parseTypeFixTypeName(type);
@@ -254,8 +254,8 @@ function parseCanReturnAndAcceptValue(str: string): TypeDefinition[] | undefined
     }
     
     types = types.filter((type, index, self) => {
-        const foundIndex = self.findIndex((t) => t.name == type.name && t.isArray == type.isArray);
-        return foundIndex == index;
+        const foundIndex = self.findIndex((t) => t.name === type.name && t.isArray === type.isArray);
+        return foundIndex === index;
     });
     
     return types;
@@ -267,29 +267,29 @@ function parseTypeFixTypeName(type: TypeDefinition) {
     type.name = type.name.replace(/\.$/, "");
     type.name = type.name.trim();
     
-    if (type.name == "varies=any" || type.name == "Any") {
+    if (type.name === "varies=any" || type.name === "Any") {
         type.name = "any";
         
-    } else if (type.name == "Undefined") {
+    } else if (type.name === "Undefined") {
         type.name = "undefined";
         
-    } else if (type.name == "String") {
+    } else if (type.name === "String") {
         type.name = "string";
         
-    } else if (type.name == "Boolean" || type.name == "bool") {
+    } else if (type.name === "Boolean" || type.name === "bool") {
         type.name = "boolean";
         
-    } else if (type.name == "Number" || type.name == "int" || type.name == "Int32" || type.name == "uint") {
+    } else if (type.name === "Number" || type.name === "int" || type.name === "Int32" || type.name === "uint") {
         type.name = "number";
         
     } else if (type.name.match(/^(Unit|Real)\s*(\([\d.]+ - [\d.]+( points)?\))?$/)) {
         type.name = "number";
         
-    } else if (type.name == "Array of 4 Units (0 - 8640 points)") {
+    } else if (type.name === "Array of 4 Units (0 - 8640 points)") {
         type.name = "[number, number, number, number]";
         type.isArray = false;
         
-    } else if (type.name == "Array of Reals") {
+    } else if (type.name === "Array of Reals") {
         type.name = "number";
         type.isArray = true;
         
@@ -316,10 +316,10 @@ function parseTypeFixTypeName(type: TypeDefinition) {
         type.isArray = true;
         parseTypeFixTypeName(type);
         
-    } else if (type.name == "Swatche") {
+    } else if (type.name === "Swatche") {
         type.name = "Swatch";
         
-    } else if (type.name == "JavaScript Function") {
+    } else if (type.name === "JavaScript Function") {
         type.name = "Function";
     }
 }
@@ -337,7 +337,7 @@ function parseType(datatype: Element | undefined): TypeDefinition[] {
             value: valueElement ? valueElement.textContent || "" : undefined,
         };
         
-        if (type.name == "Measurement Unit (Number or String)=any") {
+        if (type.name === "Measurement Unit (Number or String)=any") {
             type.name = "number";
             types.push({ name: "string", isArray: type.isArray });
         }
@@ -360,7 +360,7 @@ function removeInheritedProperties(definitions: Definition[]) {
     for (const definition of definitions) {
         const props = getListOfPropsToBeRemovedFor(definition, definitions);
         for (const prop of props) {
-            definition.props = definition.props.filter(p => p.name != prop);
+            definition.props = definition.props.filter(p => p.name !== prop);
         }
     }
 }
@@ -369,7 +369,7 @@ function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Defin
     let props: string[] = [];
     
     if (definition.extend) {
-        const parent = definitions.find(d => d.name == definition.extend);
+        const parent = definitions.find(d => d.name === definition.extend);
         if (parent) {
             for (const prop of parent.props) {
                 props.push(prop.name);
@@ -385,7 +385,7 @@ function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Defin
 function sort(definitions: Definition[]) {
     for (const definition of definitions) {
         definition.props.sort((a, b) => {
-            if (a.type != b.type) {
+            if (a.type !== b.type) {
                 if (a.type < b.type) {
                     return 1;
                 } else if (a.type > b.type) {
@@ -419,7 +419,7 @@ function generate(definitions: Definition[]) {
         for (const prop of definition.props) {
             output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n";
             
-            if (prop.type == "method") {
+            if (prop.type === "method") {
                 const params: string[] = [];
                 for (const param of prop.params) {
                     const name = generateFixParamName(param.name);
@@ -431,25 +431,25 @@ function generate(definitions: Definition[]) {
                 
                 const type = generateType(prop.types);
                 const staticKeyword = (prop.isStatic ? "static " : "");
-                if (prop.name == "[]") {
+                if (prop.name === "[]") {
                     output += "\t" + staticKeyword + "[" + params.join(", ") + "]: " + type + ";\n";
-                } else if (prop.name == definition.name) {
+                } else if (prop.name === definition.name) {
                     output += "\tconstructor(" + params.join(", ") + ");\n";
                 } else {
                     output += "\t" + staticKeyword + prop.name + "(" + params.join(", ") + "): " + type + ";\n";
                 }
                 
-            } else if (definition.type == "class") {
+            } else if (definition.type === "class") {
                 output += "\t */\n";
                 
-                const name = prop.name == "constructor" ? "'constructor'" : prop.name;
+                const name = prop.name === "constructor" ? "'constructor'" : prop.name;
                 const staticKeyword = (prop.isStatic ? "static " : "");
                 const readonlyKeyword = (prop.readonly ? "readonly " : "");
                 const type = generateType(prop.types);
                 
                 output += "\t" + staticKeyword + readonlyKeyword + name + ": " + type + ";\n";
                 
-            } else if (definition.type == "enum") {
+            } else if (definition.type === "enum") {
                 output += "\t */\n";
                 
                 output += "\t" + prop.name + " = " + prop.types[0].value + ",\n";
@@ -474,22 +474,22 @@ function generateType(types: TypeDefinition[]) {
 }
 
 function generateFixParamName(name: string) {
-    if (name == "for") {
+    if (name === "for") {
         name = "for_";
         
-    } else if (name == "with") {
+    } else if (name === "with") {
         name = "with_";
         
-    } else if (name == "in") {
+    } else if (name === "in") {
         name = "in_";
         
-    } else if (name == "default") {
+    } else if (name === "default") {
         name = "default_";
         
-    } else if (name == "return") {
+    } else if (name === "return") {
         name = "return_";
         
-    } else if (name == "export") {
+    } else if (name === "export") {
         name = "export_";
         
     }
