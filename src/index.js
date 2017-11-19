@@ -306,7 +306,7 @@ function getListOfPropsToBeRemovedFor(definition, definitions) {
     return props;
 }
 function sort(definitions) {
-    for (let definition of definitions) {
+    for (const definition of definitions) {
         definition.props.sort((a, b) => {
             if (a.type != b.type) {
                 if (a.type < b.type) {
@@ -336,24 +336,24 @@ function sort(definitions) {
 }
 function generate(definitions) {
     let output = "";
-    for (let definition of definitions) {
+    for (const definition of definitions) {
         output += "/**\n * " + definition.desc.join("\n * ") + "\n */\n";
-        let name = "declare " + definition.type + " " + definition.name;
-        let extend = definition.extend ? " extends " + definition.extend : "";
+        const name = "declare " + definition.type + " " + definition.name;
+        const extend = definition.extend ? " extends " + definition.extend : "";
         output += name + extend + " {\n";
-        for (let prop of definition.props) {
+        for (const prop of definition.props) {
             output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n";
             if (prop.type == "method") {
-                let params = [];
-                for (let param of prop.params) {
-                    let name = generateFixParamName(param.name);
+                const params = [];
+                for (const param of prop.params) {
+                    const name = generateFixParamName(param.name);
                     output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
-                    let p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
+                    const p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
                     params.push(p);
                 }
                 output += "\t */\n";
-                let type = generateType(prop.types);
-                let staticKeyword = (prop.isStatic ? "static " : "");
+                const type = generateType(prop.types);
+                const staticKeyword = (prop.isStatic ? "static " : "");
                 if (prop.name == "[]") {
                     output += "\t" + staticKeyword + "[" + params.join(", ") + "]: " + type + ";\n";
                 }
@@ -366,10 +366,10 @@ function generate(definitions) {
             }
             else if (definition.type == "class") {
                 output += "\t */\n";
-                let name = prop.name == "constructor" ? "'constructor'" : prop.name;
-                let staticKeyword = (prop.isStatic ? "static " : "");
-                let readonlyKeyword = (prop.readonly ? "readonly " : "");
-                let type = generateType(prop.types);
+                const name = prop.name == "constructor" ? "'constructor'" : prop.name;
+                const staticKeyword = (prop.isStatic ? "static " : "");
+                const readonlyKeyword = (prop.readonly ? "readonly " : "");
+                const type = generateType(prop.types);
                 output += "\t" + staticKeyword + readonlyKeyword + name + ": " + type + ";\n";
             }
             else if (definition.type == "enum") {

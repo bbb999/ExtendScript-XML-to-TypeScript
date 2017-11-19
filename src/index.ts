@@ -146,9 +146,15 @@ function parseDefinition(definition: Element): Definition {
 
 function parseProperty(prop: Element, isStatic: boolean): PropertyDefinition {
     let type: PropertyDefinition["type"];
-    if(prop.nodeName == "property") { type = "property"; }
-    else if(prop.nodeName == "method") { type = "method"; }
-    else { throw new Error("Unknown property " + prop.nodeName); }
+    if (prop.nodeName == "property") {
+        type = "property";
+        
+    } else if (prop.nodeName == "method") {
+        type = "method";
+        
+    } else {
+        throw new Error("Unknown property " + prop.nodeName);
+    }
     
     const p = {
         type,
@@ -261,59 +267,59 @@ function parseTypeFixTypeName(type: TypeDefinition) {
     type.name = type.name.replace(/\.$/, "");
     type.name = type.name.trim();
     
-    if(type.name == "varies=any" || type.name == "Any") {
+    if (type.name == "varies=any" || type.name == "Any") {
         type.name = "any";
-    }
-    else if(type.name == "Undefined") {
+        
+    } else if (type.name == "Undefined") {
         type.name = "undefined";
-    }
-    else if(type.name == "String") {
+        
+    } else if (type.name == "String") {
         type.name = "string";
-    }
-    else if(type.name == "Boolean" || type.name == "bool") {
+        
+    } else if (type.name == "Boolean" || type.name == "bool") {
         type.name = "boolean";
-    }
-    else if(type.name == "Number" || type.name == "int" || type.name == "Int32" || type.name == "uint") {
+        
+    } else if (type.name == "Number" || type.name == "int" || type.name == "Int32" || type.name == "uint") {
         type.name = "number";
-    }
-    else if(type.name.match(/^(Unit|Real)\s*(\([\d.]+ - [\d.]+( points)?\))?$/)) {
+        
+    } else if (type.name.match(/^(Unit|Real)\s*(\([\d.]+ - [\d.]+( points)?\))?$/)) {
         type.name = "number";
-    }
-    else if(type.name == "Array of 4 Units (0 - 8640 points)") {
+        
+    } else if (type.name == "Array of 4 Units (0 - 8640 points)") {
         type.name = "[number, number, number, number]";
         type.isArray = false;
-    }
-    else if(type.name == "Array of Reals") {
+        
+    } else if (type.name == "Array of Reals") {
         type.name = "number";
         type.isArray = true;
-    }
-    else if(type.name.match(/Arrays? of 2 Reals/)) {
+        
+    } else if (type.name.match(/Arrays? of 2 Reals/)) {
         type.name = "[number, number]";
-    }
-    else if(type.name.match(/Arrays? of 3 Reals/)) {
+        
+    } else if (type.name.match(/Arrays? of 3 Reals/)) {
         type.name = "[number, number, number]";
-    }
-    else if(type.name.match(/Arrays? of 6 Reals/)) {
+        
+    } else if (type.name.match(/Arrays? of 6 Reals/)) {
         type.name = "[number, number, number, number, number, number]";
-    }
-    else if(type.name.match(/Arrays? of 2 Units/)) {
+        
+    } else if (type.name.match(/Arrays? of 2 Units/)) {
         type.name = "[number | string, number | string]";
-    }
-    else if(type.name.match(/Arrays? of 2 Strings/)) {
+        
+    } else if (type.name.match(/Arrays? of 2 Strings/)) {
         type.name = "[string, string]";
-    }
-    else if(type.name.match(/(Short|Long) Integers?/)) {
+        
+    } else if (type.name.match(/(Short|Long) Integers?/)) {
         type.name = "number";
-    }
-    else if(type.name.startsWith("Array of ")) {
+        
+    } else if (type.name.startsWith("Array of ")) {
         type.name = type.name.replace(/^Array of (\S+?)s?$/, "$1").trim();
         type.isArray = true;
         parseTypeFixTypeName(type);
-    }
-    else if(type.name == "Swatche") {
+        
+    } else if (type.name == "Swatche") {
         type.name = "Swatch";
-    }
-    else if(type.name == "JavaScript Function") {
+        
+    } else if (type.name == "JavaScript Function") {
         type.name = "Function";
     }
 }
@@ -377,80 +383,73 @@ function getListOfPropsToBeRemovedFor(definition: Definition, definitions: Defin
 }
 
 function sort(definitions: Definition[]) {
-    for(let definition of definitions) {
+    for (const definition of definitions) {
         definition.props.sort((a, b) => {
-            if(a.type != b.type) {
+            if (a.type != b.type) {
                 if (a.type < b.type) {
                     return 1;
-                }
-                else if (a.type > b.type) {
+                } else if (a.type > b.type) {
                     return -1;
-                }
-                else {
+                } else {
                     return 0;
                 }
-            }
-            else {
+            } else {
                 if (a.name < b.name) {
                     return -1;
-                }
-                else if (a.name > b.name) {
+                } else if (a.name > b.name) {
                     return 1;
-                }
-                else {
+                } else {
                     return 0;
                 }
             }
-        })
+        });
     }
-    return definitions
+    return definitions;
 }
 
 function generate(definitions: Definition[]) {
     let output = "";
     
-    for(let definition of definitions) {
+    for (const definition of definitions) {
         output += "/**\n * " + definition.desc.join("\n * ") + "\n */\n";
-        let name = "declare " + definition.type + " " + definition.name;
-        let extend = definition.extend ? " extends " + definition.extend : "";
+        const name = "declare " + definition.type + " " + definition.name;
+        const extend = definition.extend ? " extends " + definition.extend : "";
         output += name + extend + " {\n";
         
-        for(let prop of definition.props) {
+        for (const prop of definition.props) {
             output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n";
             
-            if(prop.type == "method") {
-                let params: string[] = [];
-                for(let param of prop.params) {
-                    let name = generateFixParamName(param.name);
+            if (prop.type == "method") {
+                const params: string[] = [];
+                for (const param of prop.params) {
+                    const name = generateFixParamName(param.name);
                     output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
-                    let p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
+                    const p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
                     params.push(p);
                 }
                 output += "\t */\n";
                 
-                let type = generateType(prop.types);
-                let staticKeyword = (prop.isStatic ? "static " : "");
-                if(prop.name == "[]") {
+                const type = generateType(prop.types);
+                const staticKeyword = (prop.isStatic ? "static " : "");
+                if (prop.name == "[]") {
                     output += "\t" + staticKeyword + "[" + params.join(", ") + "]: " + type + ";\n";
-                }
-                else if(prop.name == definition.name) {
+                } else if (prop.name == definition.name) {
                     output += "\tconstructor(" + params.join(", ") + ");\n";
-                }
-                else {
+                } else {
                     output += "\t" + staticKeyword + prop.name + "(" + params.join(", ") + "): " + type + ";\n";
                 }
-            }
-            else if(definition.type == "class") {
+                
+            } else if (definition.type == "class") {
                 output += "\t */\n";
                 
-                let name = prop.name == "constructor" ? "'constructor'" : prop.name;
-                let staticKeyword = (prop.isStatic ? "static " : "");
-                let readonlyKeyword = (prop.readonly ? "readonly " : "");
-                let type = generateType(prop.types);
+                const name = prop.name == "constructor" ? "'constructor'" : prop.name;
+                const staticKeyword = (prop.isStatic ? "static " : "");
+                const readonlyKeyword = (prop.readonly ? "readonly " : "");
+                const type = generateType(prop.types);
                 
                 output += "\t" + staticKeyword + readonlyKeyword + name + ": " + type + ";\n";
-            }
-            else if(definition.type == "enum") {
+                
+            } else if (definition.type == "enum") {
                 output += "\t */\n";
                 
                 output += "\t" + prop.name + " = " + prop.types[0].value + ",\n";
@@ -475,23 +474,24 @@ function generateType(types: TypeDefinition[]) {
 }
 
 function generateFixParamName(name: string) {
-    if(name == "for") {
+    if (name == "for") {
         name = "for_";
-    }
-    else if(name == "with") {
+        
+    } else if (name == "with") {
         name = "with_";
-    }
-    else if(name == "in") {
+        
+    } else if (name == "in") {
         name = "in_";
-    }
-    else if(name == "default") {
+        
+    } else if (name == "default") {
         name = "default_";
-    }
-    else if(name == "return") {
+        
+    } else if (name == "return") {
         name = "return_";
-    }
-    else if(name == "export") {
+        
+    } else if (name == "export") {
         name = "export_";
+        
     }
     return name;
 }
