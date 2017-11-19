@@ -1,15 +1,16 @@
-import { readFile as fsReadFileOriginal, realpathSync, writeFile as fsWriteFileOriginal } from "fs";
+import { readFile as fsReadFileOriginal, realpath as realpathOriginal, writeFile as fsWriteFileOriginal } from "fs";
 import { promisify } from "util";
 import { JSDOM } from "jsdom";
 import { basename } from "path";
 const readFile = promisify(fsReadFileOriginal);
+const realpath = promisify(realpathOriginal);
 const writeFile = promisify(fsWriteFileOriginal);
 
 export async function convert(xmlFile: string) {
     try {
         console.info("Converting \"" + basename(xmlFile) + "\"");
         
-        xmlFile = realpathSync(xmlFile);
+        xmlFile = await realpath(xmlFile);
         
         const file = await readFile(xmlFile, "utf-8");
         

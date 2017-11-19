@@ -13,12 +13,13 @@ const util_1 = require("util");
 const jsdom_1 = require("jsdom");
 const path_1 = require("path");
 const readFile = util_1.promisify(fs_1.readFile);
+const realpath = util_1.promisify(fs_1.realpath);
 const writeFile = util_1.promisify(fs_1.writeFile);
 function convert(xmlFile) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             console.info("Converting \"" + path_1.basename(xmlFile) + "\"");
-            xmlFile = fs_1.realpathSync(xmlFile);
+            xmlFile = yield realpath(xmlFile);
             const file = yield readFile(xmlFile, "utf-8");
             const xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
             const transformed = parse(xml);
