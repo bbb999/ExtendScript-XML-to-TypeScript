@@ -422,9 +422,9 @@ function generate(definitions: Definition[]) {
             if (prop.type === "method") {
                 const params: string[] = [];
                 for (const param of prop.params) {
-                    const name = generateFixParamName(param.name);
+                    const methodName = generateFixParamName(param.name);
                     output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
-                    const p = name + (param.optional ? "?" : "") + ": " + generateType(param.types);
+                    const p = methodName + (param.optional ? "?" : "") + ": " + generateType(param.types);
                     params.push(p);
                 }
                 output += "\t */\n";
@@ -442,12 +442,12 @@ function generate(definitions: Definition[]) {
             } else if (definition.type === "class") {
                 output += "\t */\n";
                 
-                const name = prop.name === "constructor" ? "'constructor'" : prop.name;
+                const className = prop.name === "constructor" ? "'constructor'" : prop.name;
                 const staticKeyword = (prop.isStatic ? "static " : "");
                 const readonlyKeyword = (prop.readonly ? "readonly " : "");
                 const type = generateType(prop.types);
                 
-                output += "\t" + staticKeyword + readonlyKeyword + name + ": " + type + ";\n";
+                output += "\t" + staticKeyword + readonlyKeyword + className + ": " + type + ";\n";
                 
             } else if (definition.type === "enum") {
                 output += "\t */\n";
