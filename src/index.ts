@@ -1,10 +1,10 @@
-import { readFile as fsReadFileOriginal, realpath as realpathOriginal, writeFile as fsWriteFileOriginal } from "fs";
+import * as fs from "fs";
 import { promisify } from "util";
 import { JSDOM } from "jsdom";
 import { basename } from "path";
-const readFile = promisify(fsReadFileOriginal);
-const realpath = promisify(realpathOriginal);
-const writeFile = promisify(fsWriteFileOriginal);
+const readFile = promisify(fs.readFile);
+const realpath = promisify(fs.realpath);
+const writeFile = promisify(fs.writeFile);
 
 export async function convert(xmlFile: string) {
     try {

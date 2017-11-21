@@ -8,13 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = require("fs");
+const fs = require("fs");
 const util_1 = require("util");
 const jsdom_1 = require("jsdom");
 const path_1 = require("path");
-const readFile = util_1.promisify(fs_1.readFile);
-const realpath = util_1.promisify(fs_1.realpath);
-const writeFile = util_1.promisify(fs_1.writeFile);
+const readFile = util_1.promisify(fs.readFile);
+const realpath = util_1.promisify(fs.realpath);
+const writeFile = util_1.promisify(fs.writeFile);
 function convert(xmlFile) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
