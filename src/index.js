@@ -15,21 +15,21 @@ const path_1 = require("path");
 const readFile = util_1.promisify(fs.readFile);
 const realpath = util_1.promisify(fs.realpath);
 const writeFile = util_1.promisify(fs.writeFile);
-function convert(xmlFile) {
+function convert(xmlFilepath) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            console.info("Converting \"" + path_1.basename(xmlFile) + "\"");
-            xmlFile = yield realpath(xmlFile);
-            const file = yield readFile(xmlFile, "utf-8");
+            console.info("Converting \"" + path_1.basename(xmlFilepath) + "\"");
+            const xmlRealpath = yield realpath(xmlFilepath);
+            const file = yield readFile(xmlRealpath, "utf-8");
             const xml = new jsdom_1.JSDOM(file, { contentType: "text/xml" });
             const transformed = parse(xml);
             const sorted = sort(transformed);
             const result = generate(sorted);
-            yield writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
+            yield writeFile(xmlRealpath.replace(/\.xml$/, "") + ".d.ts", result);
             console.log("OK");
         }
         catch (e) {
-            console.error("Error occurred during converting file: \"" + xmlFile + "\"");
+            console.error("Error occurred during converting file: \"" + xmlFilepath + "\"");
             console.error(e.message + "\n");
         }
     });
@@ -392,22 +392,22 @@ function generateType(types) {
 }
 function generateFixParamName(name) {
     if (name === "for") {
-        name = "for_";
+        return "for_";
     }
     else if (name === "with") {
-        name = "with_";
+        return "with_";
     }
     else if (name === "in") {
-        name = "in_";
+        return "in_";
     }
     else if (name === "default") {
-        name = "default_";
+        return "default_";
     }
     else if (name === "return") {
-        name = "return_";
+        return "return_";
     }
     else if (name === "export") {
-        name = "export_";
+        return "export_";
     }
     return name;
 }
