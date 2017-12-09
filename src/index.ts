@@ -487,6 +487,8 @@ function generateFixParamName(name: string) {
         return "return_";
     } else if (name === "export") {
         return "export_";
+    } else if (name === "function") {
+        return "function_";
     }
     
     return name;
