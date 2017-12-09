@@ -10,9 +10,9 @@ export async function convert(xmlFilepath: string) {
     try {
         console.info("Converting \"" + basename(xmlFilepath) + "\"");
         
-        xmlFilepath = await realpath(xmlFilepath);
+        const xmlRealpath = await realpath(xmlFilepath);
         
-        const file = await readFile(xmlFilepath, "utf-8");
+        const file = await readFile(xmlRealpath, "utf-8");
         
         const xml = new JSDOM(file, { contentType: "text/xml" });
         
@@ -22,7 +22,7 @@ export async function convert(xmlFilepath: string) {
         
         const result = generate(sorted);
         
-        await writeFile(xmlFilepath.replace(/\.xml$/, "") + ".d.ts", result);
+        await writeFile(xmlRealpath.replace(/\.xml$/, "") + ".d.ts", result);
         
         console.log("OK");
         
