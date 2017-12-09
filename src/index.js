@@ -345,13 +345,11 @@ function generate(definitions) {
         for (const prop of definition.props) {
             output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n";
             if (prop.type === "method") {
-                const params = [];
-                for (const param of prop.params) {
+                const params = prop.params.map(param => {
                     const methodName = generateFixParamName(param.name);
                     output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
-                    const p = methodName + (param.optional ? "?" : "") + ": " + generateType(param.types);
-                    params.push(p);
-                }
+                    return methodName + (param.optional ? "?" : "") + ": " + generateType(param.types);
+                });
                 output += "\t */\n";
                 const type = generateType(prop.types);
                 const staticKeyword = (prop.isStatic ? "static " : "");

@@ -421,13 +421,12 @@ function generate(definitions: Definition[]) {
             output += "\t/**\n\t * " + prop.desc.join("\n\t * ") + "\n";
             
             if (prop.type === "method") {
-                const params: string[] = [];
-                for (const param of prop.params) {
+                const params: string[] = prop.params.map(param => {
                     const methodName = generateFixParamName(param.name);
                     output += "\t * @param " + param.name + " " + param.desc.join(" ") + "\n";
-                    const p = methodName + (param.optional ? "?" : "") + ": " + generateType(param.types);
-                    params.push(p);
-                }
+                    return methodName + (param.optional ? "?" : "") + ": " + generateType(param.types);
+                });
+                
                 output += "\t */\n";
                 
                 const type = generateType(prop.types);
