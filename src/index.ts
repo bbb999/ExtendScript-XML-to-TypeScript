@@ -477,22 +477,16 @@ function generateType(types: TypeDefinition[]) {
 function generateFixParamName(name: string) {
     if (name === "for") {
         return "for_";
-        
     } else if (name === "with") {
         return "with_";
-        
     } else if (name === "in") {
         return "in_";
-        
     } else if (name === "default") {
         return "default_";
-        
     } else if (name === "return") {
         return "return_";
-        
     } else if (name === "export") {
         return "export_";
-        
     }
     
     return name;
