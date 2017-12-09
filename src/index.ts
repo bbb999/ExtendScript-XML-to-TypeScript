@@ -6,13 +6,13 @@ const readFile = promisify(fs.readFile);
 const realpath = promisify(fs.realpath);
 const writeFile = promisify(fs.writeFile);
 
-export async function convert(xmlFile: string) {
+export async function convert(xmlFilepath: string) {
     try {
-        console.info("Converting \"" + basename(xmlFile) + "\"");
+        console.info("Converting \"" + basename(xmlFilepath) + "\"");
         
-        xmlFile = await realpath(xmlFile);
+        xmlFilepath = await realpath(xmlFilepath);
         
-        const file = await readFile(xmlFile, "utf-8");
+        const file = await readFile(xmlFilepath, "utf-8");
         
         const xml = new JSDOM(file, { contentType: "text/xml" });
         
@@ -22,12 +22,12 @@ export async function convert(xmlFile: string) {
         
         const result = generate(sorted);
         
-        await writeFile(xmlFile.replace(/\.xml$/, "") + ".d.ts", result);
+        await writeFile(xmlFilepath.replace(/\.xml$/, "") + ".d.ts", result);
         
         console.log("OK");
         
     } catch (e) {
-        console.error("Error occurred during converting file: \"" + xmlFile + "\"");
+        console.error("Error occurred during converting file: \"" + xmlFilepath + "\"");
         console.error(e.message + "\n");
     }
 }
