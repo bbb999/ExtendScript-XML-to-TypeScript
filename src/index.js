@@ -203,11 +203,14 @@ function parseTypeFixTypeName(type) {
     type.name = type.name.replace(/enumerators?/, "");
     type.name = type.name.replace(/\.$/, "");
     type.name = type.name.trim();
-    if (type.name === "varies=any" || type.name === "Any" || type.name === "Object" || type.name === "object") {
+    if (type.name === "varies=any" || type.name === "Any") {
         type.name = "any";
     }
     else if (type.name === "Undefined") {
         type.name = "undefined";
+    }
+    else if (type.name === "Object") {
+        type.name = "object";
     }
     else if (type.name === "String") {
         type.name = "string";
