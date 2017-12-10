@@ -1,5 +1,8 @@
 ## Convert ExtendScript XML documentation to TypeScript declaration
-Usage:
+
+## Usage:
+[Dump declaration files](https://github.com/pravdomil/extendscript-xml-to-typescript/issues/1) first and then:
+
 ```bash
 # install package
 npm i pravdomil/extendscript-xml-to-typescript -g
