@@ -259,7 +259,7 @@ function parseTypeFixTypeName(type) {
         type.name = "Swatch";
     }
     else if (type.name === "JavaScript Function") {
-        type.name = "() => void";
+        type.name = "Function";
     }
 }
 function parseType(datatype) {
