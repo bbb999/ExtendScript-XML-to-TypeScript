@@ -274,8 +274,7 @@ function parseTypeFixTypeName(type: TypeDefinition) {
     } else if (type.name === "Undefined") {
         type.name = "undefined";
         
-    }
-    else if (type.name === "Object") {
+    } else if (type.name === "Object") {
         type.name = "object";
         
     } else if (type.name === "String") {
@@ -326,6 +325,7 @@ function parseTypeFixTypeName(type: TypeDefinition) {
         
     } else if (type.name === "JavaScript Function") {
         type.name = "Function";
+        
     }
 }
 
