@@ -1,4 +1,5 @@
 ## Convert ExtendScript XML documentation to TypeScript declaration
+Converted files can be found in [types-for-adobe](https://github.com/pravdomil/types-for-adobe) repository.
 
 ## Usage:
 [Dump declaration files](https://github.com/pravdomil/extendscript-xml-to-typescript/issues/1) first and then:
@@ -16,6 +17,3 @@ extendscript-xml-to-typescript "~/Library/Preferences/ExtendScript Toolkit/4.0/o
 cat "~/Library/Preferences/ExtendScript Toolkit/4.0/omv$indesign-11.064$11.3.d.ts"
 
 ```
-
-## Converted files
-Can be found in [types-for-adobe](https://github.com/pravdomil/types-for-adobe) repository.
