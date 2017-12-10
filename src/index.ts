@@ -325,7 +325,7 @@ function parseTypeFixTypeName(type: TypeDefinition) {
         type.name = "Swatch";
         
     } else if (type.name === "JavaScript Function") {
-        type.name = "() => any";
+        type.name = "() => void";
     }
 }
 
