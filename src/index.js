@@ -349,7 +349,7 @@ function generate(definitions) {
                     const methodName = generateFixParamName(param.name);
                     const desc = param.desc.join(" ").trim();
                     if (desc) {
-                        output += "\t * @param " + param.name + " " + desc + "\n";
+                        output += "\t * @param " + methodName + " " + desc + "\n";
                     }
                     return methodName + (param.optional ? "?" : "") + ": " + generateType(param.types);
                 });
