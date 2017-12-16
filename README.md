@@ -1,4 +1,4 @@
-## Convert ExtendScript XML documentation to TypeScript declaration
+## Convert ExtendScript XML documentation to TypeScript declarations
 Converted files can be found in [types-for-adobe repository](https://github.com/pravdomil/types-for-adobe).
 
 ## Usage:
