@@ -1,7 +1,7 @@
 ## Convert ExtendScript XML documentation to TypeScript declarations
 Converted files can be found in [types-for-adobe repository](https://github.com/pravdomil/types-for-adobe).
 
-## Usage:
+## Usage
 [Dump declaration files](https://github.com/pravdomil/extendscript-xml-to-typescript/issues/1) first and then:
 
 ```bash
