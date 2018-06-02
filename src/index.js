@@ -30,7 +30,7 @@ function convert(xmlFilepath) {
         }
         catch (e) {
             console.error("Error occurred during converting file: \"" + xmlFilepath + "\"");
-            console.error(e.message + "\n");
+            console.error(e instanceof Error ? e.message : typeof e === "string" ? e : "😞");
         }
     });
 }
