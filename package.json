@@ -1,5 +1,11 @@
 {
   "name": "extendscript-xml-to-typescript",
+  "productName": "ExtendScript XML to TypeScript",
+  "description": "Convert ExtendScript XML documentation to TypeScript declarations",
+  "homepage": "https://pravdomil.com/#adobe",
+  "keywords": [
+    "adobe"
+  ],
   "version": "0.0.1",
   "bin": "bin/convert.js",
   "scripts": {
@@ -9,5 +15,9 @@
     "@types/jsdom": "^11.0.4",
     "commander": "^2.12.2",
     "jsdom": "^11.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pravdomil/extendscript-xml-to-typescript.git"
   }
 }
