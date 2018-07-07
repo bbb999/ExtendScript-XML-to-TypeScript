@@ -2,7 +2,7 @@
   "name": "extendscript-xml-to-typescript",
   "productName": "ExtendScript XML to TypeScript",
   "description": "Convert ExtendScript XML documentation to TypeScript declarations",
-  "homepage": "https://pravdomil.com/#adobe",
+  "homepage": "https://pravdomil.com",
   "keywords": [
     "adobe"
   ],
