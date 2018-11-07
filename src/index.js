@@ -273,8 +273,7 @@ function parseType(datatype) {
             value: valueElement ? valueElement.textContent || "" : undefined,
         };
         if (type.name === "Measurement Unit (Number or String)=any") {
-            type.name = "number";
-            types.push({ name: "string", isArray: type.isArray });
+            type.name = "number | string";
         }
         parseTypeFixTypeName(type);
         types.push(type);
