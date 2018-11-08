@@ -274,6 +274,9 @@ function parseType(datatype) {
         };
         if (type.name === "Measurement Unit (Number or String)=any") {
             type.name = "number | string";
+            if (type.isArray) {
+                type.name = "(" + type.name + ")";
+            }
         }
         parseTypeFixTypeName(type);
         types.push(type);
